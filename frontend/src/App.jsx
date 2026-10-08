@@ -198,13 +198,16 @@ export default function App() {
 
   // Handler: Human-in-the-Loop Trade Rejection
   const handleRejectTrade = async (reason) => {
+    const reasonText = (typeof reason === 'string' && reason.trim())
+      ? reason.trim()
+      : 'Declined by medical administrator';
     setProcessingTrade(true);
     setErrorBanner(null);
     try {
       const res = await fetch('/api/trade/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason: reasonText })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to reject trade');

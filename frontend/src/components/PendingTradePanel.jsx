@@ -167,7 +167,7 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        borderTop: '1px solid var(--border-subtle)',
         paddingTop: '1rem'
       }}>
         <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -179,7 +179,7 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
           {/* Reject Button */}
           <button
             className="btn btn-danger"
-            onClick={onReject}
+            onClick={() => onReject('Declined by medical administrator')}
             disabled={processing}
             id="btn-reject-trade"
             style={{ padding: '0.75rem 1.35rem' }}
@@ -191,7 +191,7 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
           {/* Approve Button */}
           <button
             className="btn btn-success"
-            onClick={onApprove}
+            onClick={() => onApprove()}
             disabled={processing}
             id="btn-approve-trade"
             style={{ padding: '0.75rem 1.75rem', fontSize: '0.95rem' }}
