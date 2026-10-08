@@ -17,11 +17,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// Authentic Mysuru Healthcare District Coordinates
+// Dakshina Kannada Healthcare Corridor Coordinates (Mangaluru Central)
 const DEFAULT_CENTER = {
-  lat: 12.3082,
-  lng: 76.6432,
-  label: "City General Hospital (Mysuru Central)"
+  lat: 12.864892,
+  lng: 74.835974,
+  label: "Wenlock District Hospital (Mangaluru Central)"
 };
 
 // Essential medical supplies list
@@ -299,7 +299,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
       (err) => {
         console.warn("Geolocation denied or failed:", err);
         setLocatingUser(false);
-        showToast('error', 'Could not detect location. Using Mysuru district default.');
+        showToast('error', 'Could not detect location. Using Dakshina Kannada default.');
       },
       { timeout: 8000, enableHighAccuracy: true }
     );
