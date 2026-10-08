@@ -469,5 +469,8 @@ if __name__ == "__main__":
             reconf(encoding="utf-8")
         except Exception:
             pass
-    print("[*] Starting MedFlow-AI Server on http://127.0.0.1:8000")
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "8000"))
+    print(f"[*] Starting MedFlow-AI Server on http://{host}:{port}")
+    uvicorn.run("server:app", host=host, port=port, reload=True)
