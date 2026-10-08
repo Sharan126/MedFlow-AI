@@ -25,23 +25,17 @@ else:
     LLM_PROVIDER = 'gemini'
     MODEL_NAME = os.getenv('MODEL_NAME', 'gemini-3.5-flash-lite')
 
-# Validate that at least one key is present
+# In server mode, allow startup without key so user can configure key via web UI modal
 if LLM_PROVIDER == 'grok':
     if not GROK_API_KEY or GROK_API_KEY == 'your_grok_api_key_here':
-        raise ValueError(
-            f"GROK_API_KEY is missing in {env_path.absolute()}. "
-            "Please provide a valid xAI Grok API key from https://console.x.ai"
-        )
+        GROK_API_KEY = None
 else:
     if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
-        if not GROK_API_KEY:
-            raise ValueError(
-                f"GEMINI_API_KEY (or GROK_API_KEY) is missing in {env_path.absolute()}. "
-                "Please provide a valid API key in your .env file."
-            )
-        else:
+        if GROK_API_KEY and GROK_API_KEY != 'your_grok_api_key_here':
             LLM_PROVIDER = 'grok'
             MODEL_NAME = os.getenv('GROK_MODEL', 'grok-2-latest')
+        else:
+            GEMINI_API_KEY = None
 
 # === RETRY CONFIGURATION ===
 MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))

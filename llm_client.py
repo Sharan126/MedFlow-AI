@@ -10,8 +10,13 @@ import json
 import requests
 from datetime import datetime
 from typing import Optional, Union, Any
-from google import genai  # type: ignore
-from google.genai import types  # type: ignore
+
+try:
+    from google import genai  # type: ignore
+    from google.genai import types  # type: ignore
+except ImportError:
+    genai: Any = None
+    types: Any = None
 
 from config import (
     GEMINI_API_KEY,
@@ -30,7 +35,7 @@ REASONING_LOG: list[dict] = []
 
 # === GEMINI CLIENT INITIALIZATION ===
 try:
-    client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+    client: Any = genai.Client(api_key=GEMINI_API_KEY) if (genai is not None and GEMINI_API_KEY) else None
     if ENABLE_DEBUG_LOGGING and client:
         print(f"Gemini client initialized successfully with model: {MODEL_NAME}")
 except Exception:
@@ -65,7 +70,7 @@ def ask_gemini(
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": user_prompt})
 
-        payload = {
+        payload: dict[str, Any] = {
             "model": MODEL_NAME,
             "messages": messages,
             "temperature": temperature
@@ -152,7 +157,10 @@ def ask_gemini(
                     raise RuntimeError(f"GROK API FAILURE - ALL RETRIES EXHAUSTED: {error_msg}")
 
     # Fallback to Gemini API
-    generation_config = types.GenerateContentConfig(
+    if types is None or genai is None:
+        raise RuntimeError("Google GenAI SDK is not installed. Please run: pip install google-genai")
+
+    generation_config: Any = types.GenerateContentConfig(
         temperature=temperature,
         max_output_tokens=max_tokens,
         system_instruction=system_prompt if system_prompt else None
