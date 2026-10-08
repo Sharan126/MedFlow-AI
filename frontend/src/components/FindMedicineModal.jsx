@@ -326,7 +326,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     setSendingRequest(true);
 
     const payload = {
-      from_hospital: "City General Hospital",
+      from_hospital: "Wenlock District Hospital",
       to_hospital: facility.name,
       medicine: selectedMedicine,
       quantity: qtyToSend,
@@ -408,7 +408,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               <input 
                 type="text"
                 className="osm-search-input"
-                placeholder="Search city, area, hospital (e.g. Mysuru)..."
+                placeholder="Search city, area, hospital (e.g. Mangaluru, Bantwal)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -742,7 +742,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               {visibleFacilities.map((facility) => {
                 const lat = facility.location?.lat || currentCenter.lat;
                 const lng = facility.location?.lng || currentCenter.lng;
-                const address = facility.location?.address || `${facility.name}, Mysuru`;
+                const address = facility.location?.address || `${facility.name}, Dakshina Kannada`;
                 const isRequested = Boolean(requestedHospitals[`${facility.name}_${selectedMedicine}`]);
                 const hasEnough = facility.stock >= Number(quantityNeeded);
                 const isPharmacy = facility.facility_type === 'pharmacy';

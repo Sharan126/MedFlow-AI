@@ -16,8 +16,8 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
       style={{
         padding: '1.75rem',
         border: '2px solid rgba(245, 158, 11, 0.65)',
-        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(15, 23, 42, 0.95))',
-        boxShadow: '0 8px 32px rgba(245, 158, 11, 0.2)',
+        background: 'linear-gradient(135deg, var(--amber-50), var(--bg-card))',
+        boxShadow: 'var(--shadow-lg)',
         borderRadius: 'var(--radius-xl)',
         display: 'flex',
         flexDirection: 'column',
@@ -32,25 +32,25 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
             width: '40px',
             height: '40px',
             borderRadius: '10px',
-            background: 'rgba(245, 158, 11, 0.2)',
-            border: '1px solid rgba(245, 158, 11, 0.5)',
+            background: 'var(--amber-50)',
+            border: '1px solid var(--amber-100)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0
           }}>
-            <ShieldAlert size={24} color="#f59e0b" />
+            <ShieldAlert size={24} color="var(--amber-600)" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fef3c7' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                 Human-in-the-Loop Verification Required
               </h2>
               <span className="badge badge-warning" style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem' }}>
                 AWAITING AUTHORIZATION
               </span>
             </div>
-            <p style={{ fontSize: '0.82rem', color: '#cbd5e1', marginTop: '0.15rem' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
               Agents have converged on an emergency reallocation proposal. Executive review is mandatory prior to physical dispatch.
             </p>
           </div>
@@ -62,20 +62,20 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: '1rem',
-        background: 'rgba(0, 0, 0, 0.3)',
+        background: 'var(--bg-surface)',
         borderRadius: 'var(--radius-md)',
         padding: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.08)'
+        border: '1px solid var(--border-subtle)'
       }}>
         {/* Outbound Dispatch (Donor -> Receiver) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#38bdf8', letterSpacing: '0.05em' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--blue-600, #0284c7)', letterSpacing: '0.05em' }}>
             PRIMARY EMERGENCY TRANSFER
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.95rem' }}>
-            <span style={{ fontWeight: '700', color: '#ffffff' }}>{donor}</span>
-            <ArrowRight size={16} color="#06b6d4" />
-            <span style={{ fontWeight: '700', color: '#f87171' }}>{receiver}</span>
+            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{donor}</span>
+            <ArrowRight size={16} color="var(--teal-600, #0d9488)" />
+            <span style={{ fontWeight: '700', color: 'var(--stock-crit)' }}>{receiver}</span>
           </div>
           <div style={{ marginTop: '0.25rem' }}>
             {Object.entries(medicines).map(([med, qty]) => (
@@ -87,12 +87,12 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
                   gap: '0.35rem',
                   padding: '0.35rem 0.75rem',
                   borderRadius: '6px',
-                  background: 'rgba(6, 182, 212, 0.15)',
-                  border: '1px solid rgba(6, 182, 212, 0.4)',
-                  color: '#67e8f9',
+                  background: 'var(--badge-surplus-bg)',
+                  border: '1px solid var(--badge-surplus-border)',
+                  color: 'var(--badge-surplus-text)',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.88rem',
-                  fontWeight: '600'
+                  fontWeight: '700'
                 }}
               >
                 <span>📦 {qty} units of {med}</span>
@@ -103,13 +103,13 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
 
         {/* Counter Exchange (Receiver -> Donor) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#34d399', letterSpacing: '0.05em' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--stock-ok)', letterSpacing: '0.05em' }}>
             RECIPROCAL EXCHANGE / RETURN
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.95rem' }}>
-            <span style={{ fontWeight: '700', color: '#f87171' }}>{receiver}</span>
-            <ArrowRight size={16} color="#10b981" />
-            <span style={{ fontWeight: '700', color: '#ffffff' }}>{donor}</span>
+            <span style={{ fontWeight: '700', color: 'var(--stock-crit)' }}>{receiver}</span>
+            <ArrowRight size={16} color="var(--stock-ok)" />
+            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{donor}</span>
           </div>
           <div style={{ marginTop: '0.25rem' }}>
             {Object.keys(counterMedicines).length > 0 ? (
@@ -122,12 +122,12 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
                     gap: '0.35rem',
                     padding: '0.35rem 0.75rem',
                     borderRadius: '6px',
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    color: '#6ee7b7',
+                    background: 'var(--badge-opt-bg)',
+                    border: '1px solid var(--badge-opt-border)',
+                    color: 'var(--badge-opt-text)',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '0.88rem',
-                    fontWeight: '600'
+                    fontWeight: '700'
                   }}
                 >
                   <span>🔄 {qty} units of {med}</span>
@@ -146,16 +146,16 @@ export default function PendingTradePanel({ pendingTrade, onApprove, onReject, p
       <div style={{
         padding: '1.15rem 1.35rem',
         borderRadius: 'var(--radius-md)',
-        background: 'rgba(15, 23, 42, 0.75)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'var(--bg-card-subtle)',
+        border: '1px solid var(--border-subtle)',
         borderLeftWidth: '4px',
-        borderLeftColor: '#06b6d4'
+        borderLeftColor: 'var(--teal-600, #0d9488)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#38bdf8', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--blue-600, #0284c7)', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
           <HeartPulse size={15} />
           <span>GEMINI EXPLAINER — CLINICAL & SAFETY IMPACT</span>
         </div>
-        <p style={{ color: '#f1f5f9', fontSize: '0.92rem', lineHeight: 1.65 }}>
+        <p style={{ color: 'var(--text-primary)', fontSize: '0.92rem', lineHeight: 1.65 }}>
           {explanation}
         </p>
       </div>

@@ -80,9 +80,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                 fontWeight: '700',
                 padding: '0.15rem 0.5rem',
                 borderRadius: '6px',
-                background: hospital.type === 'Government' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(168, 85, 247, 0.15)',
-                color: hospital.type === 'Government' ? '#67e8f9' : '#d8b4fe',
-                border: `1px solid ${hospital.type === 'Government' ? 'rgba(6, 182, 212, 0.3)' : 'rgba(168, 85, 247, 0.3)'}`
+                background: hospital.type === 'Government' ? 'var(--tag-govt-bg)' : 'var(--tag-pvt-bg)',
+                color: hospital.type === 'Government' ? 'var(--tag-govt-text)' : 'var(--tag-pvt-text)',
+                border: `1px solid ${hospital.type === 'Government' ? 'var(--tag-govt-border)' : 'var(--tag-pvt-border)'}`
               }}>
                 {hospital.type}
               </span>
@@ -93,9 +93,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                 fontWeight: '700',
                 padding: '0.15rem 0.5rem',
                 borderRadius: '6px',
-                background: 'rgba(59, 130, 246, 0.15)',
-                color: '#93c5fd',
-                border: '1px solid rgba(59, 130, 246, 0.3)'
+                background: 'var(--tag-taluk-bg)',
+                color: 'var(--tag-taluk-text)',
+                border: '1px solid var(--tag-taluk-border)'
               }}>
                 {hospital.taluk}
               </span>
@@ -137,16 +137,16 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
         )}
       </div>
 
-      {/* Medical Stock Table (Matching Screenshot 1 Flow Exactly) */}
+      {/* Medical Stock Table */}
       <div style={{
-        background: 'rgba(0, 0, 0, 0.28)',
+        background: 'var(--table-bg)',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
-        border: '1px solid var(--border-card)'
+        border: '1px solid var(--border-subtle)'
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
           <thead>
-            <tr style={{ background: 'rgba(255, 255, 255, 0.04)', color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
+            <tr style={{ background: 'var(--table-header-bg)', color: 'var(--table-header-text)', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
               <th style={{ padding: '0.6rem 0.85rem', fontWeight: '700', letterSpacing: '0.02em' }}>Medicine</th>
               <th style={{ padding: '0.6rem 0.6rem', fontWeight: '700', textAlign: 'right', letterSpacing: '0.02em' }}>Stock</th>
               <th style={{ padding: '0.6rem 0.6rem', fontWeight: '700', textAlign: 'right', letterSpacing: '0.02em' }}>Min Safety</th>
@@ -162,13 +162,13 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
               const surplus = stock > threshold ? stock - threshold : 0;
 
               // Row background highlight for critical items
-              const rowBg = isCrit ? 'rgba(239, 68, 68, 0.12)' : 'transparent';
+              const rowBg = isCrit ? 'var(--rose-50)' : 'transparent';
 
               return (
                 <tr 
                   key={med}
                   style={{ 
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderBottom: '1px solid var(--table-row-border)',
                     background: rowBg,
                     transition: 'background 0.15s ease'
                   }}
@@ -180,13 +180,13 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                     padding: '0.55rem 0.6rem', 
                     textAlign: 'right', 
                     fontFamily: 'var(--font-mono)',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     fontSize: '0.9rem',
-                    color: isCrit ? '#ef4444' : isWarn ? '#fbbf24' : '#34d399'
+                    color: isCrit ? 'var(--stock-crit)' : isWarn ? 'var(--stock-warn)' : 'var(--stock-ok)'
                   }}>
                     {stock}
                   </td>
-                  <td style={{ padding: '0.55rem 0.6rem', textAlign: 'right', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                  <td style={{ padding: '0.55rem 0.6rem', textAlign: 'right', color: 'var(--table-header-text)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: '600' }}>
                     {threshold}
                   </td>
                   <td style={{ padding: '0.55rem 0.85rem', textAlign: 'center' }}>
@@ -196,10 +196,10 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                           display: 'inline-block',
                           padding: '0.15rem 0.6rem',
                           borderRadius: '9999px',
-                          background: 'rgba(239, 68, 68, 0.18)',
-                          color: '#fca5a5',
-                          border: '1px solid #ef4444',
-                          boxShadow: '0 0 10px rgba(239, 68, 68, 0.45)',
+                          background: 'var(--badge-crit-bg)',
+                          color: 'var(--badge-crit-text)',
+                          border: '1px solid var(--badge-crit-border)',
+                          boxShadow: '0 0 10px rgba(239, 68, 68, 0.25)',
                           fontSize: '0.68rem',
                           fontWeight: '800',
                           letterSpacing: '0.04em'
@@ -214,9 +214,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                           display: 'inline-block',
                           padding: '0.15rem 0.55rem',
                           borderRadius: '9999px',
-                          background: 'rgba(245, 158, 11, 0.18)',
-                          color: '#fde047',
-                          border: '1px solid rgba(245, 158, 11, 0.5)',
+                          background: 'var(--badge-warn-bg)',
+                          color: 'var(--badge-warn-text)',
+                          border: '1px solid var(--badge-warn-border)',
                           fontSize: '0.68rem',
                           fontWeight: '700'
                         }}
@@ -230,9 +230,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                           display: 'inline-block',
                           padding: '0.15rem 0.65rem',
                           borderRadius: '9999px',
-                          background: 'rgba(6, 182, 212, 0.18)',
-                          color: '#67e8f9',
-                          border: '1px solid rgba(6, 182, 212, 0.5)',
+                          background: 'var(--badge-surplus-bg)',
+                          color: 'var(--badge-surplus-text)',
+                          border: '1px solid var(--badge-surplus-border)',
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.74rem',
                           fontWeight: '700'
@@ -247,9 +247,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                           display: 'inline-block',
                           padding: '0.15rem 0.55rem',
                           borderRadius: '9999px',
-                          background: 'rgba(16, 185, 129, 0.18)',
-                          color: '#6ee7b7',
-                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          background: 'var(--badge-opt-bg)',
+                          color: 'var(--badge-opt-text)',
+                          border: '1px solid var(--badge-opt-border)',
                           fontSize: '0.68rem',
                           fontWeight: '700'
                         }}
@@ -280,9 +280,9 @@ export default function HospitalCard({ hospital, isRequester, isDonor }) {
                   fontSize: '0.74rem',
                   padding: '0.2rem 0.55rem',
                   borderRadius: '6px',
-                  background: 'rgba(6, 182, 212, 0.12)',
-                  color: '#67e8f9',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  background: 'var(--badge-surplus-bg)',
+                  color: 'var(--badge-surplus-text)',
+                  border: '1px solid var(--badge-surplus-border)',
                   fontFamily: 'var(--font-mono)',
                   fontWeight: '700'
                 }}

@@ -191,8 +191,9 @@ def generate_hospitals(
 
     # Priority 3: Default or cross-district selection
     if not selected_configs:
-        if seed == 1 or len(dk_hospitals) < 3:
-            selected_configs = DEFAULT_HOSPITALS_CONFIG[:count]
+        is_all_corridor = not taluk or taluk.lower() in ("all", "all dakshina kannada", "all taluks")
+        if (is_all_corridor and count == 3) or seed == 1 or len(dk_hospitals) < 3:
+            selected_configs = [dict(h) for h in DEFAULT_HOSPITALS_CONFIG[:count]]
         else:
             # Choose geographically diverse nodes across different taluks if possible
             k = min(count, len(dk_hospitals))

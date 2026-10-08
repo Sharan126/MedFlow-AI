@@ -502,9 +502,9 @@ export default function App() {
                     fontWeight: '700',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    border: isActive ? '1px solid #06b6d4' : '1px solid var(--border-subtle)',
-                    background: isActive ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                    color: isActive ? '#67e8f9' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid var(--teal-600, #06b6d4)' : '1px solid var(--border-subtle)',
+                    background: isActive ? 'var(--badge-surplus-bg)' : 'var(--bg-surface)',
+                    color: isActive ? 'var(--badge-surplus-text)' : 'var(--text-secondary)',
                     transition: 'all 0.15s ease'
                   }}
                 >
