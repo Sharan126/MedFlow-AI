@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
 import HospitalCard from './components/HospitalCard';
 import NegotiationFeed from './components/NegotiationFeed';
 import PendingTradePanel from './components/PendingTradePanel';
@@ -9,27 +9,7 @@ import ApiKeyModal from './components/ApiKeyModal';
 import DakshinaKannadaModal from './components/DakshinaKannadaModal';
 import SupplyChainChatbot from './components/SupplyChainChatbot';
 import FindMedicineModal from './components/FindMedicineModal';
-import { 
-  Sparkles, 
-  Brain, 
-  AlertTriangle, 
-  Building2, 
-  RefreshCw, 
-  Search, 
-  Sun, 
-  Moon, 
-  Bell, 
-  MapPin, 
-  Plus, 
-  CheckCircle2, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  User,
-  Clock,
-  Calendar,
-  Layers,
-  FileText
-} from 'lucide-react';
+import { Sparkles, Brain, AlertTriangle, Building2, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [status, setStatus] = useState(null);
@@ -55,16 +35,14 @@ export default function App() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [showFindMedicineModal, setShowFindMedicineModal] = useState(false);
   const [errorBanner, setErrorBanner] = useState(null);
-  const [isDark, setIsDark] = useState(false);
-  const [searchFilter, setSearchFilter] = useState('');
-  const [activeSidebarTab, setActiveSidebarTab] = useState('dashboard');
+  const [isDark, setIsDark] = useState(true);
 
   // Sync theme attribute to HTML tag
   useEffect(() => {
     if (isDark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
       document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
     }
   }, [isDark]);
 
@@ -280,98 +258,28 @@ export default function App() {
   // Calculate totals
   const totalCritical = hospitals.reduce((acc, h) => acc + (h.status_counts?.critical || 0), 0);
   const totalWarning = hospitals.reduce((acc, h) => acc + (h.status_counts?.warning || 0), 0);
-  const pendingRequestsCount = medicineRequests.filter(r => r.status === 'PENDING').length;
-
-  // Filter hospitals based on search input
-  const filteredHospitals = searchFilter.trim() 
-    ? hospitals.filter(h => 
-        h.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        (h.taluk && h.taluk.toLowerCase().includes(searchFilter.toLowerCase())) ||
-        (h.location && h.location.toLowerCase().includes(searchFilter.toLowerCase()))
-      )
-    : hospitals;
 
   return (
-    <div className="hcare-app-wrapper">
-      {/* LEFT SIDEBAR NAVIGATION (Matching HCare Screenshot) */}
-      <Sidebar 
-        activeTab={activeSidebarTab}
-        onSelectTab={setActiveSidebarTab}
-        pendingCount={pendingRequestsCount}
-        onOpenDirectory={() => setShowDirectoryModal(true)}
+    <div className="dashboard-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Clinical Navigation */}
+      <Navbar 
+        status={status}
+        scenarioCount={scenarioCount}
+        onNewScenario={() => handleNewScenario(selectedTaluk, nodeCount)}
         onOpenKeyModal={() => setShowKeyModal(true)}
         onOpenFindMedicine={() => setShowFindMedicineModal(true)}
-        onStartNegotiation={handleStartNegotiation}
-        isNegotiating={isNegotiating}
+        loading={loading}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
       />
 
-      {/* RIGHT MAIN CONTENT AREA */}
-      <main className="hcare-main-content">
+      {/* Main Operations Container */}
+      <main className="dashboard-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         
-        {/* TOPBAR (Header with Search, Notifications, Actions) */}
-        <header className="hcare-topbar">
-          <div className="topbar-left">
-            <h1 className="topbar-title">Dashboard</h1>
-            <span className="topbar-sub">
-              Dakshina Kannada Healthcare Network • {directory.length || 28} Facilities across 7 Taluks
-            </span>
-          </div>
-
-          <div className="topbar-right">
-            {/* Search Input */}
-            <div className="search-bar-box">
-              <Search size={16} color="var(--text-muted)" />
-              <input 
-                type="text" 
-                placeholder="Search anything" 
-                className="search-input"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-              />
-              <span className="shortcut-kbd">⌘ F</span>
-            </div>
-
-            {/* Quick Action: Find Medicine Map */}
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowFindMedicineModal(true)}
-              style={{ padding: '0.45rem 0.95rem', fontSize: '0.82rem' }}
-              title="Open OpenStreetMap to search medicine stock"
-            >
-              <MapPin size={15} />
-              <span>Map Requisition</span>
-            </button>
-
-            {/* Theme Toggle Button */}
-            <button 
-              className="icon-button"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {isDark ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} />}
-            </button>
-
-            {/* Notification Bell with indicator */}
-            <button 
-              className="icon-button"
-              onClick={() => {
-                const el = document.getElementById('trade-audit-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              title="Notifications and Requests"
-            >
-              <Bell size={18} />
-              {(pendingTrade || pendingRequestsCount > 0 || totalCritical > 0) && (
-                <span className="notif-dot" />
-              )}
-            </button>
-          </div>
-        </header>
-
-        {/* ERROR / NOTICE BANNER (if any) */}
+        {/* Error Alert Banner with Emergency Map Fallback Trigger */}
         {errorBanner && (
           <div style={{
-            padding: '1rem 1.25rem',
+            padding: '1.15rem 1.5rem',
             borderRadius: 'var(--radius-md)',
             background: 'var(--rose-50)',
             border: '1px solid var(--rose-100)',
@@ -379,477 +287,282 @@ export default function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: '1rem',
             animation: 'fadeIn 0.2s ease'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <AlertTriangle size={20} color="#ef4444" />
-              <span style={{ fontSize: '0.86rem', fontWeight: '600' }}>{errorBanner}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <AlertTriangle size={22} color="var(--rose-600, #ef4444)" />
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '0.92rem' }}>
+                  AI Negotiation / System Notice
+                </div>
+                <div style={{ fontSize: '0.82rem', marginTop: '0.15rem', opacity: 0.9 }}>
+                  {errorBanner}. Manual Override Available: Use the Interactive Emergency Map to dispatch medication requisitions directly.
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => setErrorBanner(null)}
-              style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: '800' }}
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                className="btn btn-warning"
+                onClick={() => {
+                  setErrorBanner(null);
+                  setShowFindMedicineModal(true);
+                }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: '700' }}
+              >
+                🗺️ Open Emergency Map Requisition
+              </button>
+              <button 
+                onClick={() => setErrorBanner(null)}
+                style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ROW 1: 4 KPI METRIC CARDS (Exact HCare Structure) */}
-        <section className="hcare-stats-grid">
-          {/* Card 1: Total Patients / Facilities */}
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-title">Total Active Nodes</span>
-            </div>
-            <div className="stat-body">
-              <span className="stat-value">{directory.length || 28}</span>
-              <div className="stat-sparkline">
-                <svg width="68" height="26" viewBox="0 0 68 26" fill="none">
-                  <path d="M2 20 Q 18 22, 28 12 T 48 14 T 66 4" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="stat-footer">
-              <span className="stat-trend up">
-                <ArrowUpRight size={13} /> 40% vs last month
+        {/* Global Control & Telemetry Bar */}
+        <section className="med-card" style={{
+          padding: '1.25rem 1.75rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1.25rem',
+          borderRadius: 'var(--radius-xl)'
+        }}>
+          {/* Left: Action triggers */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <button
+              className="btn btn-primary"
+              onClick={pendingTrade ? () => document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' }) : handleStartNegotiation}
+              disabled={isNegotiating || processingTrade}
+              id="start-negotiation-btn"
+              style={{ padding: '0.8rem 1.6rem', fontSize: '0.95rem' }}
+              title={pendingTrade ? "Review pending trade proposal below" : "Run autonomous multi-agent AI negotiation"}
+            >
+              <Sparkles size={18} className={isNegotiating ? "spin" : ""} />
+              <span>
+                {isNegotiating 
+                  ? 'Evaluating Peer Inventories...' 
+                  : pendingTrade 
+                    ? '⚠️ Trade Pending Approval (Review Below)' 
+                    : '🚀 Start AI Negotiation'}
               </span>
-              <button className="stat-action-link" onClick={() => setShowDirectoryModal(true)}>
-                View Report
-              </button>
-            </div>
-          </div>
+            </button>
 
-          {/* Card 2: Consultation / Critical Deficits */}
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-title">Critical Deficits</span>
-            </div>
-            <div className="stat-body">
-              <span className="stat-value" style={{ color: totalCritical > 0 ? '#ef4444' : 'var(--text-primary)' }}>
-                {totalCritical}
+            {pendingTrade && (
+              <span className="badge badge-critical" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', animation: 'pulse 2s infinite' }}>
+                <AlertTriangle size={14} /> Action Required: 1% Human Verification
               </span>
-              <div className="stat-sparkline">
-                <svg width="68" height="26" viewBox="0 0 68 26" fill="none">
-                  <path d="M2 10 Q 18 8, 32 20 T 48 10 T 66 18" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="stat-footer">
-              <span className="stat-trend down">
-                <ArrowDownRight size={13} /> 10% vs last month
-              </span>
-              <button className="stat-action-link" onClick={() => {
-                document.getElementById('inventory-grid')?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                View Report
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: Procedure / Transfers Dispatched */}
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-title">Transfers Dispatched</span>
-            </div>
-            <div className="stat-body">
-              <span className="stat-value">{tradeHistory.stats.approved || 63}</span>
-              <div className="stat-sparkline">
-                <svg width="68" height="26" viewBox="0 0 68 26" fill="none">
-                  <path d="M2 18 Q 18 20, 32 14 T 50 12 T 66 6" stroke="#f59e0b" strokeWidth="2.2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="stat-footer">
-              <span className="stat-trend amber">
-                <ArrowUpRight size={13} /> 20% vs last month
-              </span>
-              <button className="stat-action-link" onClick={() => {
-                document.getElementById('trade-audit-section')?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                View Report
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4: Payment / Reallocated Units */}
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-title">Reallocated Value</span>
-            </div>
-            <div className="stat-body">
-              <span className="stat-value">
-                {tradeHistory.stats.total_transferred ? `${tradeHistory.stats.total_transferred}u` : '$ 20k'}
-              </span>
-              <div className="stat-sparkline">
-                <svg width="68" height="26" viewBox="0 0 68 26" fill="none">
-                  <path d="M2 19 Q 18 21, 34 11 T 50 13 T 66 4" stroke="#0d9488" strokeWidth="2.2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="stat-footer">
-              <span className="stat-trend teal">
-                <ArrowUpRight size={13} /> 20% vs last month
-              </span>
-              <button className="stat-action-link" onClick={() => {
-                document.getElementById('trade-audit-section')?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                View Report
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* ROW 2: MAIN ANALYTICS & REQUISITIONS SPLIT (2fr 1fr Grid) */}
-        <section className="hcare-analytics-split" id="inventory-grid">
-          {/* Left Card: Inventory Nodes & Corridor Management */}
-          <div className="analytics-main-card">
-            <div className="analytics-header">
-              <div className="analytics-title-group">
-                <h2>Hospital Inventory Nodes</h2>
-                <p>Oct 01, 2026 - Oct 07, 2026 • Real-time Multi-Agent Network</p>
-              </div>
-
-              {/* Action Buttons & Node Filters */}
-              <div className="analytics-actions">
-                {/* Node count selector */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  background: 'var(--bg-surface)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '0.2rem',
-                  border: '1px solid var(--border-subtle)'
-                }}>
-                  {[3, 4, 6].map(n => (
-                    <button
-                      key={n}
-                      onClick={() => {
-                        setNodeCount(n);
-                        handleNewScenario(selectedTaluk, n);
-                      }}
-                      style={{
-                        padding: '0.25rem 0.65rem',
-                        fontSize: '0.74rem',
-                        fontWeight: '700',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        border: 'none',
-                        background: nodeCount === n ? '#2563eb' : 'transparent',
-                        color: nodeCount === n ? '#ffffff' : 'var(--text-secondary)'
-                      }}
-                    >
-                      {n} Nodes
-                    </button>
-                  ))}
-                </div>
-
-                {/* Start AI Negotiation button */}
-                <button
-                  className="btn btn-primary"
-                  onClick={pendingTrade ? () => document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' }) : handleStartNegotiation}
-                  disabled={isNegotiating || processingTrade}
-                  id="start-negotiation-btn"
-                  style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
-                  title="Run autonomous multi-agent AI negotiation"
-                >
-                  <Sparkles size={14} className={isNegotiating ? "spin" : ""} />
-                  <span>{isNegotiating ? 'Negotiating...' : '🚀 Start AI Negotiation'}</span>
-                </button>
-
-                {/* Regenerate scenario */}
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => handleNewScenario(selectedTaluk, nodeCount)}
-                  disabled={loading}
-                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}
-                  title="Generate new scenario in current corridor"
-                >
-                  <RefreshCw size={13} className={loading ? "spin" : ""} />
-                  <span>New Scenario</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Taluk Corridor Switcher Tabs */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              overflowX: 'auto',
-              paddingBottom: '0.35rem',
-              borderBottom: '1px solid var(--border-subtle)'
-            }}>
-              {(taluks.length > 0 ? taluks : [
-                { name: 'All', label: 'All', count: 28 },
-                { name: 'Mangalore', label: 'Mangalore', count: 14 },
-                { name: 'Bantwal', label: 'Bantwal', count: 3 },
-                { name: 'Puttur', label: 'Puttur', count: 3 },
-                { name: 'Belthangady', label: 'Belthangady', count: 3 },
-                { name: 'Sullia', label: 'Sullia', count: 2 },
-                { name: 'Moodbidri', label: 'Moodbidri', count: 2 },
-                { name: 'Kadaba', label: 'Kadaba', count: 1 },
-              ]).map(t => {
-                const isActive = selectedTaluk === t.name;
-                return (
-                  <button
-                    key={t.name}
-                    onClick={() => {
-                      setSelectedTaluk(t.name);
-                      handleNewScenario(t.name, nodeCount);
-                    }}
-                    disabled={loading}
-                    style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      border: isActive ? '1px solid #2563eb' : '1px solid transparent',
-                      background: isActive ? '#eff6ff' : 'transparent',
-                      color: isActive ? '#2563eb' : 'var(--text-secondary)',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {t.name} ({t.count})
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Hospital Cards Grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1rem'
-            }}>
-              {filteredHospitals.map((hospital, idx) => (
-                <HospitalCard 
-                  key={hospital.name || idx} 
-                  hospital={hospital}
-                  isRequester={pendingTrade?.receiver === hospital.name}
-                  isDonor={pendingTrade?.donor === hospital.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Right Card: Upcoming Appointments & Requisitions List */}
-          <div className="requisitions-card">
-            <div className="requisitions-header">
-              <span className="requisitions-title">Upcoming Appointments</span>
-              <button 
-                className="btn btn-primary"
-                onClick={() => setShowFindMedicineModal(true)}
-                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '8px' }}
-              >
-                <Plus size={13} />
-                <span>Add New</span>
-              </button>
-            </div>
-
-            {/* List of Requisitions & Patient Visits */}
-            <div className="requisitions-list">
-              {/* Actual Map Requisitions from state */}
-              {medicineRequests.map((req) => (
-                <div key={req.id || `${req.to}_${req.timestamp}`} className="requisition-item">
-                  <div className="req-patient-info">
-                    <div className="req-avatar">
-                      {req.from ? req.from.substring(0, 2).toUpperCase() : 'RQ'}
-                    </div>
-                    <div>
-                      <div className="req-name">{req.from}</div>
-                      <div className="req-time">
-                        {req.timestamp ? new Date(req.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM'} • {req.quantity} {req.medicine}
-                      </div>
-                    </div>
-                  </div>
-                  <span className={`req-tag ${req.status === 'ACCEPTED' ? 'req-tag-green' : req.status === 'REJECTED' ? 'req-tag-orange' : 'req-tag-blue'}`}>
-                    {req.status || 'PENDING'}
-                  </span>
-                </div>
-              ))}
-
-              {/* Patient appointments matching the screenshot */}
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#fef3c7', color: '#b45309' }}>SJ</div>
-                  <div>
-                    <div className="req-name">Sarah Johnson</div>
-                    <div className="req-time">10:00 AM • Routine Checkup</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-orange">Check-up</span>
-              </div>
-
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#fee2e2', color: '#b91c1c' }}>MB</div>
-                  <div>
-                    <div className="req-name">Michael Brown</div>
-                    <div className="req-time">10:00 AM • Cardiology Follow-up</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-yellow">Follow-up</span>
-              </div>
-
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#ecfdf5', color: '#047857' }}>EW</div>
-                  <div>
-                    <div className="req-name">Emily Wilson</div>
-                    <div className="req-time">10:00 AM • Medical Consultation</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-green">Consultation</span>
-              </div>
-
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#f3e8ff', color: '#7e22ce' }}>SL</div>
-                  <div>
-                    <div className="req-name">Sophia Lee</div>
-                    <div className="req-time">11:00 AM • Prescription Refill</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-yellow">Follow-up</span>
-              </div>
-
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#e0f2fe', color: '#0369a1' }}>DR</div>
-                  <div>
-                    <div className="req-name">David Robinson</div>
-                    <div className="req-time">11:00 AM • Vitals Check-up</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-orange">Check-up</span>
-              </div>
-
-              <div className="requisition-item">
-                <div className="req-patient-info">
-                  <div className="req-avatar" style={{ background: '#f1f5f9', color: '#334155' }}>TC</div>
-                  <div>
-                    <div className="req-name">Thomas Clark</div>
-                    <div className="req-time">11:00 AM • Post-Operative Review</div>
-                  </div>
-                </div>
-                <span className="req-tag req-tag-yellow">Follow-up</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ROW 3: TASKS / NEGOTIATION FEED & PATIENT / CLINICAL SIGN-OFF (2fr 1fr Grid) */}
-        <section className="hcare-bottom-split">
-          {/* Left Card: Tasks / Live AI Negotiation Events Feed */}
-          <div className="analytics-main-card">
-            <div className="analytics-header">
-              <div className="analytics-title-group">
-                <h2>Autonomous AI Negotiation Tasks</h2>
-                <p>Real-time peer-to-peer inter-hospital negotiation messages</p>
-              </div>
-              <button 
-                className="btn btn-primary"
-                onClick={handleStartNegotiation}
-                disabled={isNegotiating}
-                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '8px' }}
-              >
-                <Plus size={13} />
-                <span>New Task</span>
-              </button>
-            </div>
-
-            {/* Negotiation Feed Component */}
-            <NegotiationFeed 
-              events={events}
-              isNegotiating={isNegotiating}
-            />
-          </div>
-
-          {/* Right Card: Patient / Clinical Verification Profile */}
-          <div className="patient-details-card" id="verification-panel">
-            {pendingTrade ? (
-              /* When an AI Trade is pending: Human-in-the-Loop Sign-off */
-              <PendingTradePanel 
-                pendingTrade={pendingTrade}
-                onApprove={handleApproveTrade}
-                onReject={handleRejectTrade}
-                processing={processingTrade}
-              />
-            ) : (
-              /* When no pending trade: Next Patient / Focal Hospital Details (Matches Screenshot) */
-              <>
-                <div className="requisitions-header">
-                  <span className="requisitions-title">Next Patient Details</span>
-                  <span className="badge badge-optimal">Active Profile</span>
-                </div>
-
-                <div className="patient-profile-header">
-                  <div className="patient-profile-avatar">
-                    <User size={24} color="#2563eb" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                      James Brown
-                    </div>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                      11:00 AM • Emergency Admission
-                    </div>
-                    <span className="req-tag req-tag-green" style={{ display: 'inline-block', marginTop: '0.2rem' }}>
-                      Consultation
-                    </span>
-                  </div>
-                </div>
-
-                <div className="patient-meta-grid">
-                  <div className="meta-field">
-                    <span className="meta-label">Patient ID</span>
-                    <span className="meta-value">HT5242</span>
-                  </div>
-                  <div className="meta-field">
-                    <span className="meta-label">Gender</span>
-                    <span className="meta-value">Male</span>
-                  </div>
-                  <div className="meta-field">
-                    <span className="meta-label">Age</span>
-                    <span className="meta-value">21</span>
-                  </div>
-                  <div className="meta-field">
-                    <span className="meta-label">Last Visit</span>
-                    <span className="meta-value">01/12/2026</span>
-                  </div>
-                  <div className="meta-field">
-                    <span className="meta-label">Height</span>
-                    <span className="meta-value">156 cm</span>
-                  </div>
-                  <div className="meta-field">
-                    <span className="meta-label">Weight</span>
-                    <span className="meta-value">60 kg</span>
-                  </div>
-                </div>
-
-                <div style={{
-                  padding: '0.75rem',
-                  borderRadius: '10px',
-                  background: 'var(--bg-surface)',
-                  fontSize: '0.78rem',
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <CheckCircle2 size={16} color="#10b981" />
-                  <span>Assigned Hospital: <strong>Wenlock District Hospital (Mangaluru)</strong></span>
-                </div>
-              </>
             )}
           </div>
+
+          {/* Right: Telemetry & Log Toggles */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+            {/* Shortage Counter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: totalCritical > 0 ? '#f87171' : '#34d399', fontWeight: '700' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: totalCritical > 0 ? '#ef4444' : '#10b981' }} />
+                <span>{totalCritical} Critical Deficits</span>
+              </div>
+              <span style={{ color: 'var(--text-muted)' }}>•</span>
+              <div style={{ color: '#fbbf24', fontWeight: '600' }}>
+                {totalWarning} Warnings
+              </div>
+            </div>
+
+            {/* Toggle AI Reasoning Drawer */}
+            <button
+              className={`btn ${showReasoning ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setShowReasoning(!showReasoning)}
+              style={{ padding: '0.55rem 1rem', fontSize: '0.82rem' }}
+              id="toggle-reasoning-log"
+            >
+              <Brain size={16} />
+              <span>{showReasoning ? 'Hide AI Reasoning' : '🧠 AI Reasoning Log'}</span>
+            </button>
+          </div>
         </section>
 
-        {/* ROW 4: IMMUTABLE AUDIT TRAIL & REQUISITION LEDGERS */}
-        <section id="trade-audit-section">
+        {/* SECTION 1: REGIONAL HOSPITAL INVENTORY NETWORK (Dakshina Kannada Corridor) */}
+        <section>
+          {/* District Header & Quick Actions */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.85rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <h2 style={{ fontSize: '1.28rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                  Network Hospital Inventory Nodes
+                </h2>
+                <span className="badge badge-surplus" style={{ fontSize: '0.72rem' }}>
+                  {hospitals.length} Active Nodes
+                </span>
+              </div>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                Karnataka Healthcare Corridor • Dakshina Kannada District ({directory.length || 28} Facilities across 7 Taluks)
+              </span>
+            </div>
+
+            {/* Action Buttons: Directory Modal & Node Count */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              {/* Node count toggle */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.2rem',
+                border: '1px solid var(--border-subtle)'
+              }}>
+                {[3, 4, 6].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => {
+                      setNodeCount(n);
+                      handleNewScenario(selectedTaluk, n);
+                    }}
+                    style={{
+                      padding: '0.25rem 0.65rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: nodeCount === n ? 'var(--teal-600)' : 'transparent',
+                      color: nodeCount === n ? '#ffffff' : 'var(--text-secondary)'
+                    }}
+                  >
+                    {n} Nodes
+                  </button>
+                ))}
+              </div>
+
+              {/* View Full Directory Button */}
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDirectoryModal(true)}
+                style={{ padding: '0.5rem 0.95rem', fontSize: '0.82rem' }}
+                id="view-dk-directory-btn"
+              >
+                <Building2 size={15} color="#06b6d4" />
+                <span>🏥 District Directory ({directory.length || 28})</span>
+              </button>
+
+              {/* Regenerate Scenario */}
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleNewScenario(selectedTaluk, nodeCount)}
+                disabled={loading}
+                style={{ padding: '0.5rem 0.95rem', fontSize: '0.82rem' }}
+                title="Generate new crisis scenario in current corridor"
+              >
+                <RefreshCw size={14} className={loading ? "spin" : ""} />
+                <span>New Scenario</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Taluk Corridor Switcher Tabs */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            marginBottom: '1.25rem',
+            overflowX: 'auto',
+            paddingBottom: '0.35rem'
+          }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', marginRight: '0.3rem', whiteSpace: 'nowrap' }}>
+              Corridor:
+            </span>
+            {(taluks.length > 0 ? taluks : [
+              { name: 'All', label: 'All Dakshina Kannada', count: 28 },
+              { name: 'Mangalore', label: 'Mangalore', count: 14 },
+              { name: 'Bantwal', label: 'Bantwal', count: 3 },
+              { name: 'Puttur', label: 'Puttur', count: 3 },
+              { name: 'Belthangady', label: 'Belthangady', count: 3 },
+              { name: 'Sullia', label: 'Sullia', count: 2 },
+              { name: 'Moodbidri', label: 'Moodbidri', count: 2 },
+              { name: 'Kadaba', label: 'Kadaba', count: 1 },
+            ]).map(t => {
+              const isActive = selectedTaluk === t.name;
+              return (
+                <button
+                  key={t.name}
+                  onClick={() => {
+                    setSelectedTaluk(t.name);
+                    handleNewScenario(t.name, nodeCount);
+                  }}
+                  disabled={loading}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    border: isActive ? '1px solid #06b6d4' : '1px solid var(--border-subtle)',
+                    background: isActive ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    color: isActive ? '#67e8f9' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {t.name} ({t.count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Hospital Cards Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            gap: '1.25rem'
+          }}>
+            {hospitals.map((hospital, idx) => (
+              <HospitalCard 
+                key={hospital.name || idx} 
+                hospital={hospital}
+                isRequester={pendingTrade?.receiver === hospital.name}
+                isDonor={pendingTrade?.donor === hospital.name}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 2: HUMAN-IN-THE-LOOP VERIFICATION */}
+        {pendingTrade && (
+          <section id="verification-panel">
+            <PendingTradePanel 
+              pendingTrade={pendingTrade}
+              onApprove={handleApproveTrade}
+              onReject={handleRejectTrade}
+              processing={processingTrade}
+            />
+          </section>
+        )}
+
+        {/* SECTION 3: LIVE MULTI-AGENT NEGOTIATION FEED */}
+        <section>
+          <NegotiationFeed 
+            events={events}
+            isNegotiating={isNegotiating}
+          />
+        </section>
+
+        {/* SECTION 4: AI REASONING TELEMETRY (Toggled) */}
+        {showReasoning && (
+          <section id="reasoning-telemetry">
+            <ReasoningDrawer 
+              reasoningData={reasoningData}
+              onClearLog={handleClearReasoning}
+            />
+          </section>
+        )}
+
+        {/* SECTION 5: IMMUTABLE TRADE HISTORY AUDIT LOG & REQUISITION REQUESTS */}
+        <section>
           <TradeHistoryTable 
             historyData={tradeHistory}
             medicineRequests={medicineRequests}
@@ -861,20 +574,9 @@ export default function App() {
           />
         </section>
 
-        {/* AI REASONING TELEMETRY (Toggled Drawer) */}
-        {showReasoning && (
-          <section id="reasoning-telemetry">
-            <ReasoningDrawer 
-              reasoningData={reasoningData}
-              onClearLog={handleClearReasoning}
-            />
-          </section>
-        )}
-
       </main>
 
-      {/* MODALS & OVERLAYS */}
-      {/* 1. Dakshina Kannada Hospital Directory Modal */}
+      {/* Dakshina Kannada Hospital Directory Modal */}
       <DakshinaKannadaModal
         isOpen={showDirectoryModal}
         onClose={() => setShowDirectoryModal(false)}
@@ -883,7 +585,7 @@ export default function App() {
         currentActiveNames={hospitals.map(h => h.name)}
       />
 
-      {/* 2. Interactive Find Medicine OpenStreetMap Modal */}
+      {/* Interactive Find Medicine Nearby Modal */}
       <FindMedicineModal 
         isOpen={showFindMedicineModal}
         onClose={() => setShowFindMedicineModal(false)}
@@ -893,7 +595,7 @@ export default function App() {
         }}
       />
 
-      {/* 3. API Key Modal */}
+      {/* API Key Modal */}
       <ApiKeyModal 
         isOpen={showKeyModal}
         onClose={() => setShowKeyModal(false)}
@@ -901,7 +603,7 @@ export default function App() {
         currentStatus={status}
       />
 
-      {/* 4. Assistant Chatbot */}
+      {/* Assistant Chatbot */}
       <SupplyChainChatbot />
     </div>
   );
