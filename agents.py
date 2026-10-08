@@ -222,34 +222,24 @@ class HospitalAgent:
     def can_safely_transfer(self, medicine: str, quantity: int) -> bool:
         """
         Check if hospital can transfer medicine without going below threshold.
-
-        Args:
-            medicine: Medicine name
-            quantity: Amount to transfer
-
-        Returns:
-            True if transfer is safe, False otherwise
         """
+        if quantity <= 0:
+            return True
         if medicine not in self.inventory:
             return False
 
         remaining = self.inventory[medicine] - quantity
-        threshold = self.thresholds[medicine]
+        threshold = self.thresholds.get(medicine, 0)
 
         return remaining >= threshold
 
     def apply_transfer(self, medicine: str, quantity: int, direction: str) -> None:
         """
         Apply a medicine transfer to inventory.
-
-        Args:
-            medicine: Medicine name
-            quantity: Amount to transfer
-            direction: "out" (giving) or "in" (receiving)
-
-        Raises:
-            ValueError: If transfer would violate safety rules
         """
+        if quantity <= 0:
+            return
+
         if medicine not in self.inventory:
             raise ValueError(f"{medicine} not in {self.name}'s inventory")
 
@@ -318,7 +308,16 @@ class HospitalAgent:
                 "message": {"type": "string"},
                 "offers": {
                     "type": "object",
-                    "additionalProperties": {"type": "integer"}
+                    "properties": {
+                        "Paracetamol": {"type": "integer"},
+                        "Amoxicillin": {"type": "integer"},
+                        "Ibuprofen": {"type": "integer"},
+                        "Insulin": {"type": "integer"},
+                        "ORS": {"type": "integer"},
+                        "Metformin": {"type": "integer"},
+                        "Ciprofloxacin": {"type": "integer"},
+                        "Omeprazole": {"type": "integer"}
+                    }
                 },
                 "reasoning": {"type": "string"}
             },
@@ -378,8 +377,18 @@ class HospitalAgent:
                 "message": {"type": "string"},
                 "reasoning": {"type": "string"},
                 "counter_offer": {
-                    "type": ["object", "null"],
-                    "additionalProperties": {"type": "integer"}
+                    "type": "object",
+                    "nullable": True,
+                    "properties": {
+                        "Paracetamol": {"type": "integer"},
+                        "Amoxicillin": {"type": "integer"},
+                        "Ibuprofen": {"type": "integer"},
+                        "Insulin": {"type": "integer"},
+                        "ORS": {"type": "integer"},
+                        "Metformin": {"type": "integer"},
+                        "Ciprofloxacin": {"type": "integer"},
+                        "Omeprazole": {"type": "integer"}
+                    }
                 }
             },
             "required": ["decision", "message", "reasoning"]

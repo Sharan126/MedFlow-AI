@@ -4,15 +4,19 @@ Wraps Google Gemini API with retry logic, structured output, and comprehensive l
 Every call is audited for transparency and debugging.
 """
 
+import os
 import time
 import json
+import requests
 from datetime import datetime
 from typing import Optional, Union, Any
-from google import genai
-from google.genai import types
+from google import genai  # type: ignore
+from google.genai import types  # type: ignore
 
 from config import (
     GEMINI_API_KEY,
+    GROK_API_KEY,
+    LLM_PROVIDER,
     MODEL_NAME,
     MAX_RETRIES,
     INITIAL_RETRY_DELAY,
@@ -26,11 +30,11 @@ REASONING_LOG: list[dict] = []
 
 # === GEMINI CLIENT INITIALIZATION ===
 try:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    if ENABLE_DEBUG_LOGGING:
-        print(f"✅ Gemini client initialized successfully with model: {MODEL_NAME}")
-except Exception as e:
-    raise RuntimeError(f"Failed to initialize Gemini client: {str(e)}")
+    client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+    if ENABLE_DEBUG_LOGGING and client:
+        print(f"Gemini client initialized successfully with model: {MODEL_NAME}")
+except Exception:
+    client = None
 
 
 def ask_gemini(
@@ -41,63 +45,169 @@ def ask_gemini(
     max_tokens: int = 2048
 ) -> Union[str, dict]:
     """
-    Send a request to Gemini with automatic retries and structured output support.
-
-    Args:
-        system_prompt: Instructions for the AI agent's role and behavior
-        user_prompt: The actual query or task for the agent
-        json_schema: Optional JSON schema to enforce structured output
-        temperature: Creativity level (0.0 = deterministic, 1.0 = creative)
-        max_tokens: Maximum response length
-
-    Returns:
-        - dict: Parsed JSON if json_schema provided
-        - str: Raw text response if no schema
-
-    Raises:
-        RuntimeError: If all retry attempts fail
+    Send a request to Gemini or Grok with automatic retries and structured output support.
     """
-
     start_time = time.time()
     attempt = 0
     last_error = None
 
-    # Build generation config
+    # Check if using Grok API
+    if LLM_PROVIDER == 'grok':
+        if not GROK_API_KEY:
+            raise RuntimeError("GROK_API_KEY is not configured in .env")
+
+        headers = {
+            "Authorization": f"Bearer {GROK_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+
+        payload = {
+            "model": MODEL_NAME,
+            "messages": messages,
+            "temperature": temperature
+        }
+        if json_schema:
+            payload["response_format"] = {"type": "json_object"}
+
+        while attempt < MAX_RETRIES:
+            try:
+                attempt += 1
+                if ENABLE_DEBUG_LOGGING:
+                    print(f"Grok API Call (Attempt {attempt}/{MAX_RETRIES})")
+                    print(f"   Model: {MODEL_NAME}")
+
+                resp = requests.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=REQUEST_TIMEOUT
+                )
+
+                if resp.status_code != 200:
+                    raise ValueError(f"Grok API Error {resp.status_code}: {resp.text}")
+
+                res_json = resp.json()
+                response_text = res_json["choices"][0]["message"]["content"]
+
+                latency_ms = int((time.time() - start_time) * 1000)
+
+                if json_schema:
+                    try:
+                        parsed_response = json.loads(response_text)
+                    except json.JSONDecodeError as e:
+                        raise ValueError(f"Grok returned invalid JSON: {str(e)}\nResponse: {response_text}")
+                else:
+                    parsed_response = response_text
+
+                formatted_response_str = (
+                    json.dumps(parsed_response, indent=2)
+                    if isinstance(parsed_response, (dict, list))
+                    else str(parsed_response)
+                )
+
+                log_entry = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+                    "model": f"grok ({MODEL_NAME})",
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "response": formatted_response_str,
+                    "full_response": parsed_response,
+                    "latency_ms": latency_ms,
+                    "attempt": attempt,
+                    "json_schema_used": json_schema is not None,
+                    "temperature": temperature,
+                    "status": "SUCCESS"
+                }
+                REASONING_LOG.append(log_entry)
+                return parsed_response
+
+            except Exception as e:
+                last_error = e
+                error_msg = str(e)
+                log_entry = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+                    "model": f"grok ({MODEL_NAME})",
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "response": None,
+                    "full_response": None,
+                    "latency_ms": int((time.time() - start_time) * 1000),
+                    "attempt": attempt,
+                    "json_schema_used": json_schema is not None,
+                    "temperature": temperature,
+                    "status": "FAILED",
+                    "error": error_msg
+                }
+                REASONING_LOG.append(log_entry)
+
+                if attempt < MAX_RETRIES:
+                    retry_delay = INITIAL_RETRY_DELAY * (2 ** (attempt - 1))
+                    time.sleep(retry_delay)
+                else:
+                    total_time = time.time() - start_time
+                    raise RuntimeError(f"GROK API FAILURE - ALL RETRIES EXHAUSTED: {error_msg}")
+
+    # Fallback to Gemini API
     generation_config = types.GenerateContentConfig(
         temperature=temperature,
         max_output_tokens=max_tokens,
-        response_modalities=["TEXT"]
+        system_instruction=system_prompt if system_prompt else None
     )
 
-    # If JSON schema provided, enforce structured output
     if json_schema:
         generation_config.response_mime_type = "application/json"
         generation_config.response_schema = json_schema
 
-    # Combine system and user prompts (Gemini uses single prompt)
-    full_prompt = f"{system_prompt}\n\n{user_prompt}"
+    prompt_content = user_prompt
+
+    global client
+    if client is None:
+        try:
+            client = genai.Client(api_key=GEMINI_API_KEY)
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize Gemini client: {str(e)}")
 
     while attempt < MAX_RETRIES:
         try:
             attempt += 1
 
             if ENABLE_DEBUG_LOGGING:
-                print(f"🔄 Gemini API Call (Attempt {attempt}/{MAX_RETRIES})")
+                print(f"Gemini API Call (Attempt {attempt}/{MAX_RETRIES})")
                 print(f"   Model: {MODEL_NAME}")
                 print(f"   JSON Schema: {'Yes' if json_schema else 'No'}")
 
             # Make the API call
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=full_prompt,
-                config=generation_config
-            )
+            active_model = os.getenv("MODEL_NAME", MODEL_NAME)
+            try:
+                response = client.models.generate_content(
+                    model=active_model,
+                    contents=prompt_content,
+                    config=generation_config
+                )
+            except Exception as call_err:
+                err_str = str(call_err)
+                if "no longer available" in err_str or "NOT_FOUND" in err_str or "404" in err_str:
+                    # Cloud deprecation fallback to working flash model
+                    active_model = "gemini-3.5-flash"
+                    response = client.models.generate_content(
+                        model=active_model,
+                        contents=prompt_content,
+                        config=generation_config
+                    )
+                else:
+                    raise call_err
 
-            # Extract response text
-            if not response.candidates or not response.candidates[0].content.parts:
+            # Extract response text safely
+            response_text = response.text if hasattr(response, "text") and response.text else None
+            if not response_text:
+                if response.candidates and response.candidates[0].content.parts:
+                    response_text = response.candidates[0].content.parts[0].text
+            if not response_text:
                 raise ValueError("Empty response received from Gemini")
-
-            response_text = response.candidates[0].content.parts[0].text
 
             # Calculate latency
             latency_ms = int((time.time() - start_time) * 1000)
@@ -111,13 +221,19 @@ def ask_gemini(
             else:
                 parsed_response = response_text
 
+            formatted_response_str = (
+                json.dumps(parsed_response, indent=2)
+                if isinstance(parsed_response, (dict, list))
+                else str(parsed_response)
+            )
+
             # Log successful call
             log_entry = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
                 "model": MODEL_NAME,
-                "system_prompt": system_prompt[:200] + "..." if len(system_prompt) > 200 else system_prompt,
-                "user_prompt": user_prompt[:200] + "..." if len(user_prompt) > 200 else user_prompt,
-                "response": str(parsed_response)[:300] + "..." if len(str(parsed_response)) > 300 else str(parsed_response),
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "response": formatted_response_str,
                 "full_response": parsed_response,  # Store complete response
                 "latency_ms": latency_ms,
                 "attempt": attempt,
@@ -141,8 +257,8 @@ def ask_gemini(
             log_entry = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
                 "model": MODEL_NAME,
-                "system_prompt": system_prompt[:200] + "..." if len(system_prompt) > 200 else system_prompt,
-                "user_prompt": user_prompt[:200] + "..." if len(user_prompt) > 200 else user_prompt,
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
                 "response": None,
                 "full_response": None,
                 "latency_ms": int((time.time() - start_time) * 1000),
