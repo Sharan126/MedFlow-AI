@@ -73,4 +73,5 @@ if ENABLE_DEBUG_LOGGING:
     print("✅ MedFlow-AI Configuration Loaded Successfully")
     print(f"   Model: {MODEL_NAME}")
     print(f"   Max Retries: {MAX_RETRIES}")
-    print(f"   API Key: {'*' * (len(GEMINI_API_KEY) - 4)}{GEMINI_API_KEY[-4:]}")
+    masked_key = f"{'*' * (len(GEMINI_API_KEY) - 4)}{GEMINI_API_KEY[-4:]}" if GEMINI_API_KEY and len(GEMINI_API_KEY) >= 4 else "Not configured"
+    print(f"   API Key: {masked_key}")

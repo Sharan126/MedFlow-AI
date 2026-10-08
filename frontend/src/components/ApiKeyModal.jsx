@@ -16,7 +16,7 @@ export default function ApiKeyModal({ isOpen, onClose, onSaveKey, currentStatus 
     setMessage(null);
     try {
       await onSaveKey(apiKey.trim());
-      setMessage({ type: 'success', text: 'API key saved successfully and connected to Gemini 2.5!' });
+      setMessage({ type: 'success', text: 'API key saved and verified successfully!' });
       setTimeout(() => {
         onClose();
       }, 1200);
@@ -34,8 +34,8 @@ export default function ApiKeyModal({ isOpen, onClose, onSaveKey, currentStatus 
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.75)',
-      backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(15, 23, 42, 0.65)',
+      backdropFilter: 'blur(6px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -44,15 +44,13 @@ export default function ApiKeyModal({ isOpen, onClose, onSaveKey, currentStatus 
       animation: 'fadeIn 0.2s ease-out'
     }}>
       <div 
-        className="glass-card"
+        className="med-card"
         style={{
           width: '100%',
           maxWidth: '520px',
           padding: '2rem',
-          background: '#0c1222',
-          border: '1px solid rgba(6, 182, 212, 0.3)',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8)',
-          position: 'relative'
+          position: 'relative',
+          boxShadow: 'var(--shadow-xl)'
         }}
       >
         {/* Close Button */}
@@ -78,52 +76,54 @@ export default function ApiKeyModal({ isOpen, onClose, onSaveKey, currentStatus 
             width: '42px',
             height: '42px',
             borderRadius: '10px',
-            background: 'rgba(6, 182, 212, 0.15)',
-            border: '1px solid rgba(6, 182, 212, 0.3)',
+            background: 'var(--teal-100)',
+            color: 'var(--teal-700)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <Key size={22} color="#06b6d4" />
+            <Key size={22} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Gemini API Configuration</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Active Model: <strong style={{ color: '#38bdf8' }}>{currentStatus?.model || 'gemini-2.5-flash'}</strong>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              Gemini AI Configuration
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Connected Model: <strong style={{ color: 'var(--teal-700)' }}>{currentStatus?.model || 'gemini-3.5-flash-lite'}</strong>
             </p>
           </div>
         </div>
 
         {/* Instructions */}
-        <p style={{ fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.55, marginBottom: '1.25rem' }}>
-          MedFlow-AI executes autonomous multi-agent negotiations without fallback templates. Enter your real Gemini API key below to unlock live agent communications:
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '1.25rem' }}>
+          MedFlow-AI coordinates real-time medical transfers using Gemini. Enter your Google AI Studio API key below if you wish to update credentials:
         </p>
 
         {/* Form */}
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-              GEMINI API KEY:
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              Gemini API Key:
             </label>
             <input 
               type="password"
-              placeholder="AIzaSy..."
+              placeholder="AQ.Ab8RN6Iqd8..."
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(0, 0, 0, 0.35)',
-                border: '1px solid var(--border-subtle)',
-                color: '#ffffff',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-card)',
+                color: 'var(--text-primary)',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.9rem',
                 outline: 'none',
                 transition: 'border 0.2s ease'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#06b6d4'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border-subtle)'}
+              onFocus={(e) => e.target.style.borderColor = 'var(--teal-600)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border-card)'}
             />
           </div>
 
@@ -135,27 +135,29 @@ export default function ApiKeyModal({ isOpen, onClose, onSaveKey, currentStatus 
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              background: message.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              border: `1px solid ${message.type === 'success' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-              color: message.type === 'success' ? '#34d399' : '#f87171'
+              background: message.type === 'success' ? 'var(--emerald-50)' : 'var(--rose-50)',
+              border: `1px solid ${message.type === 'success' ? 'var(--emerald-100)' : 'var(--rose-100)'}`,
+              color: message.type === 'success' ? 'var(--emerald-700)' : 'var(--rose-700)',
+              fontWeight: '600'
             }}>
               {message.type === 'success' ? <Check size={16} /> : <AlertTriangle size={16} />}
               <span>{message.text}</span>
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <a 
               href="https://aistudio.google.com/app/apikey" 
               target="_blank" 
               rel="noreferrer"
               style={{
-                fontSize: '0.8rem',
-                color: '#38bdf8',
+                fontSize: '0.82rem',
+                color: 'var(--blue-700)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.3rem',
-                textDecoration: 'none'
+                textDecoration: 'none',
+                fontWeight: '600'
               }}
             >
               Get free Gemini API Key <ExternalLink size={12} />

@@ -393,7 +393,7 @@ if st.session_state.pending_trade:
     with col2:
         if st.button("❌ REJECT TRADE", use_container_width=True):
             # Record rejection in trade history
-            rejection_record = reject_trade(st.session_state.pending_trade)
+            rejection_record = reject_trade(trade)
 
             trade_record = {
                 "trade_id": len(st.session_state.trade_history) + 1,

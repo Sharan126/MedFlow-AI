@@ -122,18 +122,39 @@ class HospitalAgent:
     Each agent manages inventory, detects shortages, and negotiates with other hospitals.
     """
 
-    def __init__(self, name: str, location: str, inventory: dict, thresholds: dict):
+    def __init__(
+        self,
+        name: str,
+        location: str,
+        inventory: dict,
+        thresholds: dict,
+        taluk: str = "",
+        hospital_type: str = "Government",
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        hfr_id: str = ""
+    ):
         """
         Initialize a hospital agent.
 
         Args:
-            name: Hospital name (e.g., "City General Hospital")
-            location: Geographic location as string (e.g., "Mysuru, Karnataka")
+            name: Hospital name (e.g., "Wenlock District Hospital")
+            location: Geographic location as string (e.g., "Mangalore, Dakshina Kannada")
             inventory: Current medicine stock {medicine_name: quantity}
             thresholds: Safety thresholds {medicine_name: minimum_quantity}
+            taluk: Taluk division within district (e.g., "Mangalore", "Bantwal")
+            hospital_type: "Government" or "Private"
+            latitude: Geographic latitude coordinate
+            longitude: Geographic longitude coordinate
+            hfr_id: Health Facility Registry ID
         """
         self.name = name
         self.location = location
+        self.taluk = taluk
+        self.hospital_type = hospital_type
+        self.latitude = latitude
+        self.longitude = longitude
+        self.hfr_id = hfr_id
         self.inventory = inventory.copy()  # Avoid mutation bugs
         self.thresholds = thresholds.copy()
 
@@ -325,7 +346,9 @@ class HospitalAgent:
         }
 
         response = ask_gemini(system_prompt, user_prompt, json_schema=json_schema)
-        return response
+        if isinstance(response, dict):
+            return response
+        return {"message": str(response), "offers": {}, "reasoning": "Fallback response."}
 
     def evaluate_request(self, request: dict, requester_name: str, requester_location: str = "Unknown") -> dict:
         """
@@ -395,7 +418,9 @@ class HospitalAgent:
         }
 
         response = ask_gemini(system_prompt, user_prompt, json_schema=json_schema)
-        return response
+        if isinstance(response, dict):
+            return response
+        return {"decision": "reject", "message": str(response), "reasoning": "Fallback response."}
 
     def generate_explanation(
         self,
@@ -464,7 +489,11 @@ class HospitalAgent:
         # Plain text response (no JSON schema)
         explanation = ask_gemini(system_prompt, user_prompt, json_schema=None, temperature=0.5)
 
-        return explanation.strip()
+        if isinstance(explanation, str):
+            return explanation.strip()
+        elif isinstance(explanation, dict):
+            return str(explanation.get("explanation", explanation.get("message", str(explanation)))).strip()
+        return str(explanation).strip()
 
     def __repr__(self) -> str:
         """String representation for debugging."""

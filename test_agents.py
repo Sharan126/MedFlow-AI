@@ -9,8 +9,12 @@ import os
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        out_recon = getattr(sys.stdout, "reconfigure", None)
+        err_recon = getattr(sys.stderr, "reconfigure", None)
+        if callable(out_recon):
+            out_recon(encoding="utf-8", errors="replace")
+        if callable(err_recon):
+            err_recon(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
@@ -31,8 +35,13 @@ print("="*70)
 
 try:
     test_agent = HospitalAgent(
-        name="City General Hospital",
-        location="Mysuru Central",
+        name="Wenlock District Hospital",
+        location="Mangalore, Dakshina Kannada",
+        taluk="Mangalore",
+        hospital_type="Government",
+        latitude=12.864892,
+        longitude=74.835974,
+        hfr_id="IN2910000001",
         inventory={
             "Paracetamol": 1200,
             "Amoxicillin": 800,
