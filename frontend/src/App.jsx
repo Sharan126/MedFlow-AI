@@ -6,6 +6,7 @@ import PendingTradePanel from './components/PendingTradePanel';
 import TradeHistoryTable from './components/TradeHistoryTable';
 import ReasoningDrawer from './components/ReasoningDrawer';
 import ApiKeyModal from './components/ApiKeyModal';
+import SupplyChainChatbot from './components/SupplyChainChatbot';
 import FindMedicineButton from './components/FindMedicineButton';
 import FindMedicineModal from './components/FindMedicineModal';
 import { Play, Sparkles, Brain, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle } from 'lucide-react';
@@ -202,7 +203,7 @@ export default function App() {
   const totalWarning = hospitals.reduce((acc, h) => acc + (h.status_counts?.warning || 0), 0);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="dashboard-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Navigation */}
       <Navbar 
         status={status}
@@ -214,7 +215,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      <main className="dashboard-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         
         {/* Error Alert Banner */}
         {/* Error Alert Banner with Emergency Map Fallback Trigger */}
@@ -417,6 +418,8 @@ export default function App() {
         onSaveKey={handleSaveKey}
         currentStatus={status}
       />
+
+      <SupplyChainChatbot />
     </div>
   );
 }

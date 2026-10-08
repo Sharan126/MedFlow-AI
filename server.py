@@ -11,6 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 import uvicorn
 from dotenv import set_key, load_dotenv
@@ -22,6 +23,7 @@ import config
 from data import generate_hospitals
 from negotiation import run_negotiation, execute_trade, reject_trade
 from llm_client import get_reasoning_log, get_reasoning_stats, clear_reasoning_log
+from chatbot import ask_supply_chain_assistant
 import agents as agents_module
 
 app = FastAPI(
@@ -53,6 +55,11 @@ from state import state, SystemState
 class SaveKeyRequest(BaseModel):
     api_key: str
 
+
+class ChatRequest(BaseModel):
+    question: str
+
+
 def format_hospitals_data():
     """Serialize hospital agents for JSON response."""
     result = []
@@ -83,6 +90,39 @@ def format_hospitals_data():
     return result
 
 # === API ENDPOINTS ===
+
+@app.get("/")
+def root():
+    """Basic API landing endpoint."""
+    return {
+        "status": "online",
+        "service": "MedFlow-AI",
+        "version": "2.0.0",
+        "message": "MedFlow-AI backend is running successfully.",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "status_endpoint": "/api/status"
+    }
+
+
+@app.get("/health")
+def health_check():
+    """Lightweight health-check endpoint for the frontend/deployment."""
+    return {
+        "status": "healthy",
+        "service": "MedFlow-AI"
+    }
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Provide the browser tab icon when the API landing page is opened."""
+    return Response(
+        content='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+                '<text y=".9em" font-size="90">🏥</text></svg>',
+        media_type="image/svg+xml"
+    )
+
 
 @app.get("/api/status")
 def get_system_status():
@@ -321,6 +361,26 @@ def get_reasoning():
         "logs": list(reversed(logs)),
         "stats": stats
     }
+
+
+@app.post("/api/chat")
+def chat_endpoint(payload: ChatRequest):
+    """Answer a question using a read-only snapshot of the current system state."""
+    question = payload.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    try:
+        response = ask_supply_chain_assistant(
+            question,
+            format_hospitals_data(),
+            state.trade_history,
+            state.pending_trade,
+        )
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Assistant request failed: {e}")
+
 
 @app.post("/api/reasoning/clear")
 def clear_reasoning():
