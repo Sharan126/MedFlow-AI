@@ -100,6 +100,30 @@ VERIFIED_OSM_FACILITIES: List[Dict[str, Any]] = [
         "lng": 75.2020,
         "address": "Main Road, Puttur, Dakshina Kannada",
         "osm_id": 500000006
+    },
+    {
+        "name": "Janatha Pharmacy 24x7",
+        "type": "pharmacy",
+        "lat": 12.8523,
+        "lng": 74.8513,
+        "address": "Mangala Devi Temple Road, Mangaluru",
+        "osm_id": 3351186349
+    },
+    {
+        "name": "MedPlus Pharmacy Bejai",
+        "type": "pharmacy",
+        "lat": 12.8909,
+        "lng": 74.8413,
+        "address": "Bejai Main Road, Mangaluru",
+        "osm_id": 1717550929
+    },
+    {
+        "name": "Radha Medicals",
+        "type": "pharmacy",
+        "lat": 12.8760,
+        "lng": 74.8452,
+        "address": "Kudumal Ranga Rao Road, Mangaluru",
+        "osm_id": 4836877113
     }
 ]
 
@@ -117,14 +141,70 @@ def calculate_haversine_distance(lat1: float, lon1: float, lat2: float, lon2: fl
 
 def fetch_real_osm_hospitals(lat: float, lng: float, radius: int = 15000) -> List[Dict[str, Any]]:
     """
-    Query the OpenStreetMap Overpass API for real physical hospitals, clinics, and pharmacies
-    within the specified radius (in meters) of the selected coordinates.
-    Tries multiple mirror endpoints with timeout fallback.
+    Query real physical hospitals, clinics, and pharmacies nearby the user's coordinates.
+    Uses multi-tiered strategy:
+    1. Fast OpenStreetMap Nominatim Bounded POI query (instant, reliable worldwide)
+    2. Overpass API query (comprehensive geospatial extract)
+    3. Verified regional physical facility cache fallback
     """
     cache_key = f"{round(lat, 2)}_{round(lng, 2)}_{radius}"
-    if cache_key in OSM_HOSPITALS_CACHE:
+    if cache_key in OSM_HOSPITALS_CACHE and len(OSM_HOSPITALS_CACHE[cache_key]) > 0:
         return OSM_HOSPITALS_CACHE[cache_key]
 
+    hospitals = []
+    seen_names = set()
+
+    # Tier 1: Fast & Ultra-Reliable OpenStreetMap Nominatim Bounded Search
+    try:
+        rad_km = radius / 1000.0
+        deg_lat = rad_km / 111.0
+        deg_lng = rad_km / (111.0 * math.cos(math.radians(lat)) if math.cos(math.radians(lat)) != 0 else 1.0)
+        min_lng = round(lng - deg_lng, 4)
+        max_lng = round(lng + deg_lng, 4)
+        min_lat = round(lat - deg_lat, 4)
+        max_lat = round(lat + deg_lat, 4)
+
+        for amenity in ["hospital", "pharmacy"]:
+            url = "https://nominatim.openstreetmap.org/search"
+            headers = {"User-Agent": "MedFlow-AI-SupplyChain/2.0"}
+            params = {
+                "amenity": amenity,
+                "format": "json",
+                "bounded": 1,
+                "viewbox": f"{min_lng},{max_lat},{max_lng},{min_lat}",
+                "limit": 10
+            }
+            resp = requests.get(url, params=params, headers=headers, timeout=3.5)
+            if resp.status_code == 200:
+                items = resp.json()
+                for item in items:
+                    raw_title = item.get("display_name", "").split(",")[0].strip()
+                    if not raw_title or raw_title in seen_names or len(raw_title) < 3:
+                        continue
+                    seen_names.add(raw_title)
+
+                    h_lat = float(item.get("lat"))
+                    h_lng = float(item.get("lon"))
+                    parts = item.get("display_name", "").split(",")
+                    address_snippet = ", ".join(parts[1:4]).strip() if len(parts) > 2 else "Medical Sector"
+                    osm_id = item.get("osm_id")
+
+                    hospitals.append({
+                        "name": raw_title,
+                        "type": amenity,
+                        "lat": h_lat,
+                        "lng": h_lng,
+                        "address": f"{address_snippet} ({round(h_lat, 4)}°N, {round(h_lng, 4)}°E)",
+                        "osm_id": osm_id
+                    })
+
+        if len(hospitals) >= 6:
+            OSM_HOSPITALS_CACHE[cache_key] = hospitals
+            return hospitals
+    except Exception as e:
+        pass
+
+    # Tier 2: Overpass API query if Nominatim didn't return enough facilities
     overpass_query = f"""
     [out:json][timeout:6];
     (
@@ -152,9 +232,6 @@ def fetch_real_osm_hospitals(lat: float, lng: float, radius: int = 15000) -> Lis
             )
             if resp.status_code == 200:
                 elements = resp.json().get("elements", [])
-                hospitals = []
-                seen_names = set()
-
                 for el in elements:
                     tags = el.get("tags", {})
                     name = tags.get("name") or tags.get("operator")
@@ -164,7 +241,6 @@ def fetch_real_osm_hospitals(lat: float, lng: float, radius: int = 15000) -> Lis
                     seen_names.add(name)
                     h_lat = el.get("lat") or el.get("center", {}).get("lat")
                     h_lng = el.get("lon") or el.get("center", {}).get("lon")
-
                     if not h_lat or not h_lng:
                         continue
 
@@ -187,7 +263,7 @@ def fetch_real_osm_hospitals(lat: float, lng: float, radius: int = 15000) -> Lis
         except Exception:
             continue
 
-    # Fallback to authentic pre-cached Dakshina Kannada facilities within radius
+    # Tier 3: Pre-cached verified Dakshina Kannada facilities fallback
     fallback_results = []
     radius_km = radius / 1000.0
     for fac in VERIFIED_OSM_FACILITIES:
@@ -204,8 +280,9 @@ def fetch_real_osm_hospitals(lat: float, lng: float, radius: int = 15000) -> Lis
                 "osm_id": int(fac.get("osm_id", 1000000))
             })
 
-    OSM_HOSPITALS_CACHE[cache_key] = fallback_results
-    return fallback_results
+    final_res = hospitals if hospitals else fallback_results
+    OSM_HOSPITALS_CACHE[cache_key] = final_res
+    return final_res
 
 
 @router.get("/api/osm-geocode")
@@ -278,6 +355,72 @@ def geocode_osm_location(q: str = Query(..., description="Address or city to geo
     return {"results": default_val}
 
 
+@router.get("/api/detect-location")
+def detect_user_location():
+    """
+    Detect user's live geographic location via real-time network IP geolocation.
+    Provides fast, authentic live coordinates for users on desktop or before browser GPS settles.
+    """
+    try:
+        res = requests.get("http://ip-api.com/json/", timeout=3)
+        if res.status_code == 200:
+            data = res.json()
+            if data.get("status") == "success":
+                lat = float(data.get("lat"))
+                lng = float(data.get("lon"))
+                city = data.get("city", "Local Area")
+                region = data.get("regionName", "Karnataka")
+                return {
+                    "success": True,
+                    "lat": lat,
+                    "lng": lng,
+                    "city": city,
+                    "region": region,
+                    "display_name": f"{city}, {region}, India",
+                    "source": "Network IP Geolocation"
+                }
+    except Exception as e:
+        pass
+
+    return {
+        "success": False,
+        "lat": 12.9187,
+        "lng": 74.8598,
+        "city": "Mangaluru",
+        "region": "Karnataka",
+        "display_name": "Mangaluru, Karnataka, India",
+        "source": "Regional Gateway"
+    }
+
+
+@router.get("/api/osm-reverse-geocode")
+def reverse_geocode_osm(lat: float = Query(...), lng: float = Query(...)):
+    """
+    Reverse geocode live coordinates into real human-readable street/locality names via OpenStreetMap Nominatim.
+    """
+    try:
+        url = "https://nominatim.openstreetmap.org/reverse"
+        headers = {"User-Agent": "MedFlow-AI-Healthcare/2.0 (contact: info@medflow.ai)"}
+        params = {"lat": lat, "lon": lng, "format": "json"}
+        res = requests.get(url, params=params, headers=headers, timeout=4)
+        if res.status_code == 200:
+            data = res.json()
+            addr = data.get("address", {})
+            locality = addr.get("suburb") or addr.get("neighbourhood") or addr.get("road") or addr.get("village") or addr.get("town") or addr.get("city") or "Live Location"
+            city = addr.get("city") or addr.get("town") or addr.get("state_district") or ""
+            label = f"{locality}, {city}".strip(", ")
+            return {
+                "display_name": data.get("display_name", f"{lat:.4f}°N, {lng:.4f}°E"),
+                "short_name": label if label else f"{lat:.4f}°N, {lng:.4f}°E"
+            }
+    except Exception:
+        pass
+    return {
+        "display_name": f"{lat:.4f}°N, {lng:.4f}°E",
+        "short_name": f"{lat:.4f}°N, {lng:.4f}°E"
+    }
+
+
 @router.get("/api/nearby-hospitals")
 def get_nearby_hospitals(
     medicine: str = Query(..., description="Name of the medicine to search"),
@@ -288,9 +431,9 @@ def get_nearby_hospitals(
     facility_type: Optional[str] = Query("all", description="Facility filter: all, hospital, pharmacy")
 ):
     """
-    Retrieve network hospitals along with real OpenStreetMap physical hospitals and pharmacies,
-    geolocation coordinates, Haversine distances, OpenStreetMap links, and live medicine stock metrics.
-    Anchored to the Dakshina Kannada Healthcare Corridor.
+    Retrieve network hospitals along with real OpenStreetMap physical hospitals and pharmacies nearby
+    the user's actual location, with geodesic Haversine distance calculations, inventory levels, and
+    requisition routing. Anchored to the Dakshina Kannada Healthcare Corridor.
     """
     user_lat = float(getattr(lat, "default", lat))
     user_lng = float(getattr(lng, "default", lng))
@@ -302,10 +445,6 @@ def get_nearby_hospitals(
 
     # 1. First include core network agents from live system state with their authentic coordinates
     for h in state.hospitals:
-        stock = h.inventory.get(medicine, 0)
-        threshold = h.thresholds.get(medicine, 0)
-        surplus = max(0, stock - threshold)
-
         # Retrieve authentic coordinates from agent attributes or Dakshina Kannada registry
         h_lat = getattr(h, "latitude", None)
         h_lng = getattr(h, "longitude", None)
@@ -330,6 +469,14 @@ def get_nearby_hospitals(
         }
 
         dist_km = calculate_haversine_distance(user_lat, user_lng, loc_meta["lat"], loc_meta["lng"])
+
+        # Only include core agents if within reasonable reach of the user's live position
+        if dist_km > max(rad_km * 2.5, 30.0):
+            continue
+
+        stock = h.inventory.get(medicine, 0)
+        threshold = h.thresholds.get(medicine, 0)
+        surplus = max(0, stock - threshold)
 
         # Check facility type filter
         if f_type and f_type != "all" and f_type != "hospital":
