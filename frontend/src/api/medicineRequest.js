@@ -39,8 +39,15 @@ export async function sendMedicineRequest(payload) {
   }
 }
 
-export async function fetchNearbyHospitals(medicine = "Paracetamol", minQuantity = 0) {
-  const query = `?medicine=${encodeURIComponent(medicine)}&min_quantity=${minQuantity}`;
+export async function fetchNearbyHospitals(
+  medicine = "Paracetamol", 
+  minQuantity = 0, 
+  lat = 12.3082, 
+  lng = 76.6432, 
+  radiusKm = 15, 
+  facilityType = "all"
+) {
+  const query = `?medicine=${encodeURIComponent(medicine)}&min_quantity=${minQuantity}&lat=${lat}&lng=${lng}&radius_km=${radiusKm}&facility_type=${facilityType}`;
   try {
     const res = await fetch(getApiUrl(`/api/nearby-hospitals${query}`));
     if (!res.ok) {
@@ -50,6 +57,25 @@ export async function fetchNearbyHospitals(medicine = "Paracetamol", minQuantity
   } catch (error) {
     const fallbackRes = await fetch(`http://localhost:8000/api/nearby-hospitals${query}`);
     return await fallbackRes.json();
+  }
+}
+
+export async function searchOsmLocations(query) {
+  if (!query || !query.trim()) return [];
+  const qStr = encodeURIComponent(query.trim());
+  try {
+    const res = await fetch(getApiUrl(`/api/osm-geocode?q=${qStr}`));
+    if (!res.ok) throw new Error("Geocode search failed");
+    const data = await res.json();
+    return data.results || [];
+  } catch (error) {
+    try {
+      const fallbackRes = await fetch(`http://localhost:8000/api/osm-geocode?q=${qStr}`);
+      const data = await fallbackRes.json();
+      return data.results || [];
+    } catch (e) {
+      return [];
+    }
   }
 }
 

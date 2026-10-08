@@ -1,22 +1,22 @@
-/* FindMedicineModal.css - Modern Dark UI Map Overlay */
+/* FindMedicineModal.css - Premium OpenStreetMap Experience for MedFlow-AI */
 
 .find-medicine-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(3, 7, 18, 0.82);
-  backdrop-filter: blur(10px);
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1.25rem;
   animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeInModal {
   from {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.985);
   }
   to {
     opacity: 1;
@@ -26,29 +26,30 @@
 
 .find-medicine-container {
   width: 100%;
-  max-width: 1240px;
-  height: 88vh;
-  max-height: 850px;
-  background: #0f172a;
+  max-width: 1380px;
+  height: 92vh;
+  max-height: 920px;
+  background: #0b1120;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-xl, 16px);
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.75), 0 0 35px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.85), 0 0 40px rgba(6, 182, 212, 0.18);
   position: relative;
 }
 
-/* TOP BAR (filters) */
+/* TOP BAR */
 .find-medicine-topbar {
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(15, 23, 42, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 1.35rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.85rem;
+  z-index: 10;
 }
 
 .topbar-left {
@@ -58,29 +59,135 @@
 }
 
 .topbar-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
+}
+
+.osm-logo-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+}
+
+.title-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 0.72rem;
+  color: #06b6d4;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .topbar-filters {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
+}
+
+/* OpenStreetMap Location Search Bar */
+.osm-search-box {
+  display: flex;
+  align-items: center;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.2rem 0.35rem 0.2rem 0.65rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.osm-search-box:focus-within {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25);
+}
+
+.osm-search-icon {
+  color: #94a3b8;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
+}
+
+.osm-search-input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.82rem;
+  width: 210px;
+  outline: none;
+}
+
+.osm-search-input::placeholder {
+  color: #64748b;
+}
+
+.btn-osm-search-submit {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 0.28rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-osm-search-submit:hover {
+  background: #06b6d4;
+  color: #ffffff;
+  border-color: #06b6d4;
+}
+
+/* Geolocation button */
+.btn-locate-me {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: #22d3ee;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.btn-locate-me:hover {
+  background: rgba(6, 182, 212, 0.28);
+  border-color: #06b6d4;
+  color: #ffffff;
+}
+
+.btn-locate-me.active-locating {
+  animation: pulseLocating 1.2s infinite;
+}
+
+@keyframes pulseLocating {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.97); }
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .filter-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
@@ -92,9 +199,9 @@
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #f1f5f9;
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.85rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
   font-weight: 500;
   outline: none;
   transition: all 0.2s ease;
@@ -107,62 +214,412 @@
 }
 
 .filter-input {
-  width: 130px;
+  width: 95px;
+}
+
+.select-radius {
+  width: 85px;
 }
 
 .btn-search-map {
-  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  background: linear-gradient(135deg, #06b6d4, #2563eb);
   color: #ffffff;
   border: none;
-  padding: 0.55rem 1.15rem;
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
-  margin-top: 1rem;
-}
-
-.btn-search-map:hover {
-  opacity: 0.95;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45);
-}
-
-.btn-close-map {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
-  padding: 0.55rem 1rem;
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   transition: all 0.2s ease;
-  margin-top: 1rem;
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
+  margin-top: 0.95rem;
+}
+
+.btn-search-map:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-search-map:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-close-map {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-top: 0.95rem;
 }
 
 .btn-close-map:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  color: #ef4444;
 }
 
-/* MAIN AREA (map) */
+/* BODY: SPLIT VIEW (Sidebar + Leaflet Map) */
+.find-medicine-body {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+/* FACILITIES SIDEBAR */
+.osm-facilities-sidebar {
+  width: 380px;
+  background: #0f172a;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+  transition: width 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.sidebar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.text-cyan {
+  color: #06b6d4;
+}
+
+.sidebar-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Filter pills (All, Hospitals, Pharmacies) */
+.facility-type-pills {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem;
+  border-radius: 8px;
+  gap: 0.25rem;
+}
+
+.type-pill {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.type-pill:hover {
+  color: #ffffff;
+}
+
+.type-pill.active {
+  background: #06b6d4;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3);
+}
+
+/* Sidebar facility list */
+.sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sidebar-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.sidebar-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.spinner-osm {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(6, 182, 212, 0.2);
+  border-top-color: #06b6d4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+.btn-expand-radius {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #22d3ee;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-expand-radius:hover {
+  background: #06b6d4;
+  color: #ffffff;
+}
+
+/* Facility Card in Sidebar */
+.facility-card {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.facility-card:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(6, 182, 212, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.facility-card.card-sufficient {
+  border-left: 3px solid #10b981;
+}
+
+.facility-card.card-limited {
+  border-left: 3px solid #f59e0b;
+}
+
+.facility-card.card-requested {
+  border-left: 3px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.facility-card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.facility-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-hospital {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-pharmacy {
+  background: rgba(6, 182, 212, 0.18);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.distance-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 0.18rem 0.45rem;
+  border-radius: 4px;
+}
+
+.core-node-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.facility-card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.facility-card-address {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 0.2rem 0 0 0;
+  line-height: 1.3;
+}
+
+.facility-card-stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.stock-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stock-label {
+  color: #94a3b8;
+}
+
+.stock-val {
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+}
+
+.text-green {
+  color: #34d399;
+}
+
+.text-amber {
+  color: #fbbf24;
+}
+
+.surplus-chip {
+  color: #38bdf8;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.facility-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.btn-card-focus {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-card-focus:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: #06b6d4;
+  color: #ffffff;
+}
+
+.btn-card-request {
+  flex: 1;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: #ffffff;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-card-request:hover {
+  filter: brightness(1.15);
+}
+
+.btn-card-request.requested {
+  background: #3b82f6;
+  cursor: default;
+}
+
+/* MAIN MAP CONTAINER */
 .find-medicine-map-container {
   flex: 1;
   position: relative;
   width: 100%;
   height: 100%;
   background: #020617;
-  min-height: 400px;
 }
 
 .find-medicine-map-container .leaflet-container {
@@ -172,20 +629,188 @@
   font-family: inherit;
 }
 
-/* Dark mode styling for Leaflet popups */
+/* Dark Mode filter for OpenStreetMap Tiles (100% Free, Zero API Keys, Zero Watermarks) */
+.dark-osm-tiles .leaflet-tile {
+  filter: brightness(0.65) invert(1) contrast(2.6) hue-rotate(190deg) saturate(0.35) brightness(0.85);
+}
+
+/* FLOATING MAP CONTROLS OVERLAY */
+.osm-map-floating-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.osm-layer-switch {
+  display: flex;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  gap: 0.2rem;
+}
+
+.btn-osm-layer {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-osm-layer:hover {
+  color: #ffffff;
+}
+
+.btn-osm-layer.active {
+  background: #06b6d4;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+}
+
+.btn-toggle-sidebar {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+}
+
+.btn-toggle-sidebar:hover {
+  background: #1e293b;
+  border-color: #06b6d4;
+  color: #ffffff;
+}
+
+/* CUSTOM MARKERS */
+.osm-custom-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.osm-marker-pin {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.osm-marker-pin:hover {
+  transform: scale(1.15);
+  z-index: 999;
+}
+
+.osm-marker-pin.sufficient {
+  background: #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.85);
+}
+
+.osm-marker-pin.limited {
+  background: #f59e0b;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.85);
+}
+
+.osm-marker-pin.requested {
+  background: #3b82f6;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.9);
+}
+
+.osm-marker-pin.pharmacy {
+  font-size: 15px;
+}
+
+/* Pulsing Center Location Marker */
+.osm-center-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.osm-center-pulse {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.osm-center-dot {
+  width: 14px;
+  height: 14px;
+  background: #06b6d4;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.9);
+  z-index: 2;
+}
+
+.osm-center-ring {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #06b6d4;
+  border-radius: 50%;
+  animation: pulseOsmRing 1.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  z-index: 1;
+}
+
+@keyframes pulseOsmRing {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* LEAFLET POPUP STYLING */
 .find-medicine-map-container .leaflet-popup-content-wrapper {
-  background: #1a1a2e !important;
+  background: #131b2e !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75) !important;
   padding: 0 !important;
   overflow: hidden;
 }
 
 .find-medicine-map-container .leaflet-popup-tip {
-  background: #1a1a2e !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: #131b2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
 }
 
 .find-medicine-map-container .leaflet-popup-content {
@@ -196,20 +821,48 @@
 
 .find-medicine-map-container .leaflet-popup-close-button {
   color: #94a3b8 !important;
-  padding: 6px !important;
+  padding: 8px !important;
   top: 8px !important;
   right: 8px !important;
 }
 
-.find-medicine-map-container .leaflet-popup-close-button:hover {
-  color: #ffffff !important;
-}
-
-/* POPUP CONTENT */
 .popup-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.65rem;
   margin-bottom: 0.75rem;
+}
+
+.popup-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.popup-type-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.popup-type-tag.hospital {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.popup-type-tag.pharmacy {
+  background: rgba(6, 182, 212, 0.18);
+  color: #22d3ee;
+}
+
+.popup-distance-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
 }
 
 .popup-hospital-name {
@@ -219,9 +872,9 @@
 }
 
 .popup-hospital-address {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #94a3b8;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -230,9 +883,9 @@
 .popup-details {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  font-size: 0.84rem;
-  margin-bottom: 0.95rem;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.85rem;
 }
 
 .popup-stat-row {
@@ -260,23 +913,23 @@
 }
 
 .popup-req-box {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 0.65rem;
-  margin-bottom: 0.85rem;
+  padding: 0.6rem;
+  margin-bottom: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .popup-req-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #cbd5e1;
 }
 
 .popup-req-input {
-  background: #0f172a;
+  background: #0b1120;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   padding: 0.35rem 0.6rem;
@@ -288,7 +941,7 @@
 }
 
 .popup-req-input:focus {
-  border-color: #3b82f6;
+  border-color: #06b6d4;
 }
 
 .btn-popup-send {
@@ -298,7 +951,7 @@
   border: none;
   padding: 0.55rem 0.85rem;
   border-radius: 8px;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -311,32 +964,64 @@
 
 .btn-popup-send:hover {
   filter: brightness(1.1);
-  transform: translateY(-1px);
 }
 
 .btn-popup-send:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
-/* BOTTOM BAR (summary) */
+/* OpenStreetMap External Action Buttons */
+.popup-osm-links {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-osm-link {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-osm-link:hover {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: #06b6d4;
+  color: #22d3ee;
+}
+
+/* BOTTOM BAR */
 .find-medicine-bottombar {
   background: rgba(15, 23, 42, 0.98);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.85rem 1.5rem;
+  padding: 0.75rem 1.35rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  z-index: 10;
 }
 
 .bottombar-stats {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -351,11 +1036,25 @@
   color: #ffffff;
 }
 
+.osm-attribution-chip {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.osm-attribution-chip a {
+  color: #06b6d4;
+  text-decoration: none;
+}
+
+.osm-attribution-chip a:hover {
+  text-decoration: underline;
+}
+
 .legend-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 0.78rem;
+  gap: 0.95rem;
+  font-size: 0.76rem;
   color: #94a3b8;
 }
 
@@ -366,13 +1065,13 @@
 }
 
 .legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   display: inline-block;
 }
 
-/* TOAST NOTIFICATION */
+/* TOAST ALERT */
 .map-toast {
   position: absolute;
   top: 1.25rem;
@@ -411,4 +1110,20 @@
   background: rgba(239, 68, 68, 0.95);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 900px) {
+  .osm-facilities-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 320px;
+    z-index: 1001;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+  .osm-search-input {
+    width: 140px;
+  }
 }
