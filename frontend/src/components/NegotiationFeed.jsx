@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, ChevronDown, ChevronUp, Bot, BrainCircuit, Check, X, ArrowRight, ShieldAlert } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronUp, Bot, Sparkles, Building2, ArrowRight } from 'lucide-react';
 
 export default function NegotiationFeed({ events, isNegotiating }) {
   const [expandedReasoning, setExpandedReasoning] = useState({});
@@ -11,52 +11,55 @@ export default function NegotiationFeed({ events, isNegotiating }) {
     }));
   };
 
-  // Helper to color-code event types
+  // Plain-English, healthcare-friendly badge labeling
   const getEventBadge = (type) => {
     switch (type) {
       case 'request':
-        return { label: 'CRITICAL REQUEST', bg: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: 'rgba(239, 68, 68, 0.4)' };
+        return { label: 'URGENT SHORTAGE ALERT', bg: 'var(--rose-50)', color: 'var(--rose-700)', border: 'var(--rose-100)' };
       case 'accept':
-        return { label: 'ACCEPT OFFER', bg: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: 'rgba(16, 185, 129, 0.4)' };
+        return { label: 'PROPOSAL ACCEPTED', bg: 'var(--emerald-50)', color: 'var(--emerald-700)', border: 'var(--emerald-100)' };
       case 'counter':
-        return { label: 'COUNTER PROPOSAL', bg: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' };
+        return { label: 'SAFE SURPLUS OFFER', bg: 'var(--amber-50)', color: 'var(--amber-700)', border: 'var(--amber-100)' };
       case 'reject':
-        return { label: 'REJECT OFFER', bg: 'rgba(100, 116, 139, 0.25)', color: '#94a3b8', border: 'rgba(100, 116, 139, 0.4)' };
+        return { label: 'PROPOSAL DECLINED', bg: 'var(--bg-surface)', color: 'var(--text-muted)', border: 'var(--border-subtle)' };
       case 'approval':
-        return { label: 'HUMAN APPROVED', bg: 'rgba(16, 185, 129, 0.25)', color: '#6ee7b7', border: 'rgba(16, 185, 129, 0.5)' };
+        return { label: 'PHYSICIAN AUTHORIZED', bg: 'var(--emerald-50)', color: 'var(--emerald-700)', border: 'var(--emerald-100)' };
       case 'rejection':
-        return { label: 'HUMAN REJECTED', bg: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', border: 'rgba(239, 68, 68, 0.5)' };
+        return { label: 'DECLINED BY ADMIN', bg: 'var(--rose-50)', color: 'var(--rose-700)', border: 'var(--rose-100)' };
       default:
-        return { label: 'NETWORK EVENT', bg: 'rgba(6, 182, 212, 0.15)', color: '#38bdf8', border: 'rgba(6, 182, 212, 0.3)' };
+        return { label: 'NETWORK DISPATCH', bg: 'var(--teal-50)', color: 'var(--teal-700)', border: 'var(--teal-border)' };
     }
   };
 
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="med-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Title & Transmission Count */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            background: 'rgba(6, 182, 212, 0.15)',
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: 'var(--teal-100)',
+            color: 'var(--teal-700)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid rgba(6, 182, 212, 0.3)'
+            justifyContent: 'center'
           }}>
-            <Bot size={18} color="#06b6d4" />
+            <MessageSquare size={19} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>Live Autonomous Negotiation Feed</h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Real-time multi-agent communications powered strictly by Gemini 2.5 Flash
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              Hospital AI Coordination & Dispatch Log
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Autonomous peer-to-peer communication between hospital inventory agents
             </p>
           </div>
         </div>
 
         {events && events.length > 0 && (
-          <span className="badge badge-surplus" style={{ fontFamily: 'var(--font-mono)' }}>
+          <span className="badge badge-surplus" style={{ fontWeight: '600' }}>
             {events.length} Transmissions
           </span>
         )}
@@ -74,51 +77,53 @@ export default function NegotiationFeed({ events, isNegotiating }) {
         {(!events || events.length === 0) && !isNegotiating && (
           <div style={{
             textAlign: 'center',
-            padding: '3rem 1rem',
+            padding: '2.75rem 1rem',
             color: 'var(--text-muted)',
-            background: 'rgba(0, 0, 0, 0.2)',
+            background: 'var(--bg-surface)',
             borderRadius: 'var(--radius-md)',
             border: '1px dashed var(--border-subtle)'
           }}>
-            <BrainCircuit size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.4, color: '#06b6d4' }} />
-            <p style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-secondary)' }}>
-              No active negotiation in progress.
+            <Bot size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.5, color: 'var(--teal-600)' }} />
+            <p style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+              No active inter-hospital coordination in progress.
             </p>
-            <p style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>
-              Click <strong>"Start AI Negotiation"</strong> above to trigger autonomous agent triage.
+            <p style={{ fontSize: '0.82rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>
+              Click <strong>"Auto-Resolve Medication Shortages"</strong> above to trigger peer hospital coordination.
             </p>
           </div>
         )}
 
+        {/* Loading Spinner for Negotiation */}
         {isNegotiating && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
             padding: '1.25rem',
-            background: 'rgba(6, 182, 212, 0.1)',
+            background: 'var(--teal-50)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(6, 182, 212, 0.3)'
+            border: '1px solid var(--teal-border)'
           }}>
             <div style={{
-              width: '24px',
-              height: '24px',
+              width: '26px',
+              height: '26px',
               borderRadius: '50%',
-              border: '2px solid #06b6d4',
+              border: '3px solid var(--teal-600)',
               borderTopColor: 'transparent',
-              animation: 'thinkingSpin 1s infinite linear'
+              animation: 'spinSlow 1s infinite linear'
             }} />
             <div>
-              <div style={{ fontWeight: '600', color: '#67e8f9', fontSize: '0.9rem' }}>
-                Gemini 2.5 Multi-Agent Negotiation Active...
+              <div style={{ fontWeight: '700', color: 'var(--teal-700)', fontSize: '0.92rem' }}>
+                Gemini Medical AI Coordinating Regional Hospitals...
               </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Evaluating peer inventories, generating strategic requests, and auditing counter-offers.
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Auditing peer inventories, verifying patient safety buffers, and crafting reciprocal transfer options.
               </div>
             </div>
           </div>
         )}
 
+        {/* Events Rendered as Chat Cards */}
         {events && events.map((ev, idx) => {
           const badge = getEventBadge(ev.type);
           const hasReasoning = Boolean(ev.reasoning && ev.reasoning.trim().length > 0);
@@ -128,89 +133,100 @@ export default function NegotiationFeed({ events, isNegotiating }) {
             <div 
               key={idx}
               style={{
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.07)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-card)',
                 borderRadius: 'var(--radius-md)',
-                padding: '0.95rem 1.15rem',
+                padding: '1rem 1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.5rem',
+                boxShadow: 'var(--shadow-sm)',
                 borderLeft: `4px solid ${badge.color}`,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.15s ease'
               }}
             >
-              {/* Event Metadata Line */}
+              {/* Event Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    [{ev.timestamp || '00:00:00'}]
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem' }}>
+                  <span style={{ 
+                    background: 'var(--bg-surface)', 
+                    color: 'var(--text-muted)', 
+                    padding: '0.15rem 0.45rem', 
+                    borderRadius: '4px',
+                    fontFamily: 'var(--font-mono)', 
+                    fontSize: '0.74rem' 
+                  }}>
+                    {ev.timestamp || '00:00:00'}
                   </span>
-                  <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                  
+                  <span style={{ fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Building2 size={14} color="var(--teal-600)" />
                     {ev.agent}
                   </span>
+
                   <ArrowRight size={13} style={{ color: 'var(--text-muted)' }} />
-                  <span style={{ color: '#38bdf8', fontWeight: '500' }}>
-                    {ev.target || 'Network'}
+
+                  <span style={{ color: 'var(--blue-700)', fontWeight: '600' }}>
+                    {ev.target || 'Regional Network'}
                   </span>
                 </div>
 
                 <span style={{
-                  fontSize: '0.65rem',
+                  fontSize: '0.7rem',
                   fontWeight: '700',
-                  padding: '0.2rem 0.55rem',
-                  borderRadius: '4px',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '9999px',
                   background: badge.bg,
                   color: badge.color,
                   border: `1px solid ${badge.border}`,
-                  letterSpacing: '0.04em'
+                  letterSpacing: '0.03em'
                 }}>
                   {badge.label}
                 </span>
               </div>
 
-              {/* Message Content */}
-              <div style={{ fontSize: '0.88rem', color: '#e2e8f0', lineHeight: 1.55 }}>
+              {/* Message Bubble Text */}
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
                 {ev.message}
               </div>
 
-              {/* Expandable AI Reasoning Section */}
+              {/* Expandable Technical Reasoning (Hidden by default for non-tech judges) */}
               {hasReasoning && (
-                <div style={{ marginTop: '0.35rem' }}>
+                <div style={{ marginTop: '0.25rem' }}>
                   <button
                     onClick={() => toggleReasoning(idx)}
                     style={{
-                      background: 'rgba(0, 0, 0, 0.25)',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      borderRadius: '4px',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '6px',
                       padding: '0.25rem 0.65rem',
-                      color: '#94a3b8',
-                      fontSize: '0.74rem',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.75rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.35rem',
                       cursor: 'pointer',
-                      fontWeight: '500'
+                      fontWeight: '600'
                     }}
                   >
-                    <BrainCircuit size={13} color="#a855f7" />
-                    <span>{isExpanded ? 'Hide AI Reasoning' : '🧠 AI Internal Reasoning'}</span>
+                    <Sparkles size={13} color="var(--teal-600)" />
+                    <span>{isExpanded ? 'Hide AI Clinical Rationale' : '🔍 View AI Clinical Rationale'}</span>
                     {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
 
                   {isExpanded && (
                     <div style={{
-                      marginTop: '0.45rem',
-                      padding: '0.65rem 0.85rem',
-                      background: 'rgba(168, 85, 247, 0.08)',
-                      borderLeft: '2px solid #a855f7',
-                      borderRadius: '0 4px 4px 0',
-                      fontSize: '0.8rem',
-                      color: '#d8b4fe',
-                      fontFamily: 'var(--font-mono)',
+                      marginTop: '0.5rem',
+                      padding: '0.75rem 0.95rem',
+                      background: 'var(--teal-50)',
+                      borderLeft: '3px solid var(--teal-600)',
+                      borderRadius: '0 6px 6px 0',
+                      fontSize: '0.82rem',
+                      color: 'var(--teal-700)',
                       lineHeight: 1.5
                     }}>
-                      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#c084fc', marginBottom: '0.25rem', fontWeight: '700' }}>
-                        Private Agent Deliberation:
+                      <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--teal-700)', marginBottom: '0.25rem', fontWeight: '800' }}>
+                        Autonomous Agent Deliberation:
                       </div>
                       "{ev.reasoning}"
                     </div>

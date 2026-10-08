@@ -52,7 +52,7 @@ def request_medicine(payload: dict):
             f"Write a 1-sentence urgent, courteous inter-hospital requisition to {to_hospital} "
             f"for {quantity} units of {medicine} for emergency patient care."
         )
-        ai_resp = ask_gemini(gemini_prompt, temperature=0.3)
+        ai_resp = ask_gemini("You are an inter-hospital coordination AI.", gemini_prompt, temperature=0.3)
         if isinstance(ai_resp, dict) and "message" in ai_resp:
             req_message = ai_resp["message"]
         elif isinstance(ai_resp, str) and ai_resp.strip():

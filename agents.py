@@ -5,6 +5,7 @@ All negotiation logic is driven by Gemini - NO hardcoded messages.
 """
 
 from typing import Optional
+from config import ENABLE_DEBUG_LOGGING
 from llm_client import ask_gemini
 
 # === SYSTEM PROMPTS FOR MULTI-AGENT NEGOTIATION ===
@@ -122,25 +123,52 @@ class HospitalAgent:
     Each agent manages inventory, detects shortages, and negotiates with other hospitals.
     """
 
-    def __init__(self, name: str, location: str, inventory: dict, thresholds: dict):
+    def __init__(
+        self,
+        name: str,
+        location: str,
+        inventory: dict,
+        thresholds: dict,
+        taluk: str = "",
+        hospital_type: str = "Government",
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        hfr_id: str = ""
+    ):
         """
         Initialize a hospital agent.
 
         Args:
-            name: Hospital name (e.g., "City General Hospital")
-            location: Geographic location as string (e.g., "Mysuru, Karnataka")
+            name: Hospital name (e.g., "Wenlock District Hospital")
+            location: Geographic location as string (e.g., "Mangalore, Dakshina Kannada")
             inventory: Current medicine stock {medicine_name: quantity}
             thresholds: Safety thresholds {medicine_name: minimum_quantity}
+            taluk: Taluk division within district (e.g., "Mangalore", "Bantwal")
+            hospital_type: "Government" or "Private"
+            latitude: Geographic latitude coordinate
+            longitude: Geographic longitude coordinate
+            hfr_id: Health Facility Registry ID
         """
         self.name = name
         self.location = location
+        self.taluk = taluk
+        self.hospital_type = hospital_type
+        self.latitude = latitude
+        self.longitude = longitude
+        self.hfr_id = hfr_id
         # Coordinates (lat, lng) for geospatial mapping
-        coords_map = {
-            "City General Hospital": (12.9716, 77.5946),
-            "District Government Hospital": (12.9500, 77.6200),
-            "Rural Primary Health Centre": (12.9900, 77.5500),
-        }
-        self.coords = coords_map.get(name, (12.9716, 77.5946))
+        if latitude is not None and longitude is not None:
+            self.coords = (latitude, longitude)
+        else:
+            coords_map = {
+                "City General Hospital": (12.9716, 77.5946),
+                "District Government Hospital": (12.9500, 77.6200),
+                "Rural Primary Health Centre": (12.9900, 77.5500),
+                "Wenlock District Hospital": (12.864892, 74.835974),
+                "Bantwal Taluka Hospital": (12.893750, 75.041410),
+                "SDM Hospital": (12.994560, 75.332100),
+            }
+            self.coords = coords_map.get(name, (12.864892, 74.835974))
         self.inventory = inventory.copy()  # Avoid mutation bugs
         self.thresholds = thresholds.copy()
 

@@ -531,11 +531,11 @@ def get_nearby_hospitals(
     with geodesic distance calculations, inventory levels, and requisition routing.
     """
     # Safely unpack params if called directly in tests
-    user_lat = float(lat.default if hasattr(lat, "default") else lat)
-    user_lng = float(lng.default if hasattr(lng, "default") else lng)
-    rad_km = float(radius_km.default if hasattr(radius_km, "default") else radius_km)
-    min_qty = int(min_quantity.default if hasattr(min_quantity, "default") else min_quantity)
-    f_type = facility_type.default if hasattr(facility_type, "default") else facility_type
+    user_lat = float(getattr(lat, "default", lat))
+    user_lng = float(getattr(lng, "default", lng))
+    rad_km = float(getattr(radius_km, "default", radius_km))
+    min_qty = int(getattr(min_quantity, "default", min_quantity))
+    f_type = str(getattr(facility_type, "default", facility_type) or "all")
 
     results = []
 

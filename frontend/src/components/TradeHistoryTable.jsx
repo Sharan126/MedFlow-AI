@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { History, CheckCircle2, XCircle, ChevronDown, ChevronUp, Package, ArrowRight, ShieldCheck, Inbox, Clock, Check, X } from 'lucide-react';
+import { 
+  History, 
+  CheckCircle2, 
+  XCircle, 
+  ChevronDown, 
+  ChevronUp, 
+  Package, 
+  ArrowRight, 
+  ShieldCheck, 
+  Inbox, 
+  Clock, 
+  Check, 
+  X 
+} from 'lucide-react';
 import { updateMedicineRequestStatus } from '../api/medicineRequest';
 
 export default function TradeHistoryTable({ 
@@ -36,58 +49,57 @@ export default function TradeHistoryTable({
   };
 
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Title & Summary Metrics */}
+    <div className="med-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Title & Navigation Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '8px',
-            background: 'rgba(16, 185, 129, 0.15)',
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: activeTab === 'trades' ? 'var(--emerald-100, rgba(16, 185, 129, 0.15))' : 'rgba(6, 182, 212, 0.15)',
+            color: activeTab === 'trades' ? 'var(--emerald-700, #10b981)' : '#06b6d4',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid rgba(16, 185, 129, 0.3)'
+            justifyContent: 'center'
           }}>
-            {activeTab === 'trades' ? <History size={18} color="#10b981" /> : <Inbox size={18} color="#06b6d4" />}
+            {activeTab === 'trades' ? <History size={19} /> : <Inbox size={19} />}
           </div>
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>
-              {activeTab === 'trades' ? 'Immutable Trade Audit History' : 'Inter-Hospital Requisition Requests'}
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+              {activeTab === 'trades' ? 'Emergency Delivery & Compliance Audit Trail' : 'Inter-Hospital Requisition Requests'}
             </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               {activeTab === 'trades' 
-                ? 'Complete audit ledger recording human approval and rejection decisions'
-                : 'Direct hospital medicine requests dispatched via interactive map search'}
+                ? 'Permanent hospital regulatory log of authorized and declined medication transfers'
+                : 'Direct hospital medicine requests dispatched via interactive Dakshina Kannada map search'}
             </p>
           </div>
         </div>
 
-        {/* Tab Buttons & KPIs */}
+        {/* Tab Buttons & Filter Bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {/* Tabs */}
           <div style={{
             display: 'inline-flex',
-            background: 'rgba(0, 0, 0, 0.4)',
+            background: 'var(--bg-surface)',
             padding: '0.25rem',
             borderRadius: 'var(--radius-md, 8px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)'
+            border: '1px solid var(--border-subtle)'
           }}>
             <button
               onClick={() => setActiveTab('trades')}
               style={{
-                background: activeTab === 'trades' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                color: activeTab === 'trades' ? '#ffffff' : '#94a3b8',
+                background: activeTab === 'trades' ? 'var(--teal-600, #0d9488)' : 'transparent',
+                color: activeTab === 'trades' ? '#ffffff' : 'var(--text-secondary)',
                 border: 'none',
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.95rem',
                 borderRadius: '6px',
                 fontSize: '0.82rem',
-                fontWeight: '600',
+                fontWeight: '700',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                gap: '0.45rem',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -97,22 +109,22 @@ export default function TradeHistoryTable({
             <button
               onClick={() => setActiveTab('requests')}
               style={{
-                background: activeTab === 'requests' ? 'rgba(6, 182, 212, 0.2)' : 'transparent',
-                color: activeTab === 'requests' ? '#67e8f9' : '#94a3b8',
+                background: activeTab === 'requests' ? 'var(--blue-600, #2563eb)' : 'transparent',
+                color: activeTab === 'requests' ? '#ffffff' : 'var(--text-secondary)',
                 border: 'none',
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.95rem',
                 borderRadius: '6px',
                 fontSize: '0.82rem',
-                fontWeight: '600',
+                fontWeight: '700',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                gap: '0.45rem',
                 transition: 'all 0.2s ease'
               }}
             >
               <Inbox size={14} />
-              <span>Incoming Requests</span>
+              <span>Map Requisitions</span>
               {pendingRequestsCount > 0 && (
                 <span style={{
                   background: '#f59e0b',
@@ -132,18 +144,15 @@ export default function TradeHistoryTable({
           {activeTab === 'requests' && onOpenFindMedicine && (
             <button
               onClick={onOpenFindMedicine}
+              className="btn btn-outline"
               style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(6, 182, 212, 0.22))',
-                border: '1px solid rgba(16, 185, 129, 0.45)',
-                color: '#6ee7b7',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
+                padding: '0.45rem 0.95rem',
                 fontSize: '0.82rem',
-                fontWeight: '600',
-                cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem'
+                gap: '0.4rem',
+                borderColor: 'var(--teal-500)',
+                color: 'var(--teal-700)'
               }}
               title="Open map to search nearby hospitals and dispatch an emergency requisition"
             >
@@ -151,52 +160,52 @@ export default function TradeHistoryTable({
             </button>
           )}
 
-          {/* KPI Counter Chips (when on trades tab) */}
+          {/* Clinical KPI Metric Cards (on trades tab) */}
           {activeTab === 'trades' && (
             <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
               <div style={{
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.85rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: 'var(--emerald-50)',
+                border: '1px solid var(--emerald-100)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontSize: '0.82rem',
-                color: '#34d399',
-                fontWeight: '600'
+                color: 'var(--emerald-700)',
+                fontWeight: '700'
               }}>
                 <CheckCircle2 size={15} />
-                <span>{stats.approved} Approved</span>
+                <span>{stats.approved} Dispatched</span>
               </div>
 
               <div style={{
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.85rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--rose-50)',
+                border: '1px solid var(--rose-100)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontSize: '0.82rem',
-                color: '#f87171',
-                fontWeight: '600'
+                color: 'var(--rose-700)',
+                fontWeight: '700'
               }}>
                 <XCircle size={15} />
-                <span>{stats.rejected} Rejected</span>
+                <span>{stats.rejected} Declined</span>
               </div>
 
               <div style={{
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.85rem',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(6, 182, 212, 0.12)',
-                border: '1px solid rgba(6, 182, 212, 0.3)',
+                background: 'var(--teal-50)',
+                border: '1px solid var(--teal-border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontSize: '0.82rem',
-                color: '#67e8f9',
-                fontWeight: '600'
+                color: 'var(--teal-700)',
+                fontWeight: '700'
               }}>
                 <Package size={15} />
                 <span>{stats.total_transferred} Units Reallocated</span>
@@ -206,36 +215,36 @@ export default function TradeHistoryTable({
         </div>
       </div>
 
-      {/* CONTENT TAB 1: Executed Trades */}
+      {/* TAB 1: Executed Trades */}
       {activeTab === 'trades' && (
         trades.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '2.5rem 1rem',
             color: 'var(--text-muted)',
-            background: 'rgba(0, 0, 0, 0.2)',
+            background: 'var(--bg-surface)',
             borderRadius: 'var(--radius-md)',
             border: '1px dashed var(--border-subtle)',
             fontSize: '0.88rem'
           }}>
-            No executed or rejected trades on record. Run a negotiation to propose transfers.
+            No completed or declined transfers in this session yet. Run an AI negotiation to propose emergency transfers.
           </div>
         ) : (
           <div style={{
             overflowX: 'auto',
-            background: 'rgba(0, 0, 0, 0.25)',
+            background: 'var(--bg-card)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
+            border: '1px solid var(--border-card)'
           }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', width: '80px' }}>Trade #</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', width: '160px' }}>Timestamp</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Routing Corridor</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Medicines Transferred</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'center', width: '120px' }}>Status</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'right', width: '70px' }}>Audit</th>
+                <tr style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', textAlign: 'left', borderBottom: '1px solid var(--border-card)' }}>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', width: '80px' }}>Record #</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', width: '160px' }}>Timestamp</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700' }}>Hospital Route</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700' }}>Medications Transferred</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', textAlign: 'center', width: '130px' }}>Sign-off Status</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', textAlign: 'right', width: '80px' }}>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,76 +257,76 @@ export default function TradeHistoryTable({
                       <tr 
                         onClick={() => toggleExpand(t.trade_id)}
                         style={{ 
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                          borderBottom: '1px solid var(--border-subtle)',
                           cursor: 'pointer',
-                          background: isExpanded ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+                          background: isExpanded ? 'var(--bg-surface)' : 'transparent',
                           transition: 'background 0.15s ease'
                         }}
                       >
-                        <td style={{ padding: '0.75rem 0.85rem', fontFamily: 'var(--font-mono)', fontWeight: '700', color: '#94a3b8' }}>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--text-muted)' }}>
                           #{t.trade_id}
                         </td>
-                        <td style={{ padding: '0.75rem 0.85rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                        <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                           {t.timestamp}
                         </td>
-                        <td style={{ padding: '0.75rem 0.85rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '600' }}>
-                            <span style={{ color: '#ffffff' }}>{t.donor}</span>
-                            <ArrowRight size={13} style={{ color: '#06b6d4' }} />
-                            <span style={{ color: '#38bdf8' }}>{t.receiver}</span>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>{t.donor}</span>
+                            <ArrowRight size={14} color="var(--teal-600)" />
+                            <span style={{ color: 'var(--blue-700)' }}>{t.receiver}</span>
                           </div>
                         </td>
-                        <td style={{ padding: '0.75rem 0.85rem' }}>
+                        <td style={{ padding: '0.75rem 1rem' }}>
                           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                             {Object.entries(t.medicines || {}).map(([med, qty]) => (
                               <span 
                                 key={med}
                                 style={{
-                                  padding: '0.15rem 0.45rem',
-                                  borderRadius: '4px',
-                                  background: 'rgba(6, 182, 212, 0.1)',
-                                  color: '#67e8f9',
-                                  border: '1px solid rgba(6, 182, 212, 0.25)',
-                                  fontSize: '0.75rem',
-                                  fontFamily: 'var(--font-mono)'
+                                  padding: '0.2rem 0.55rem',
+                                  borderRadius: '6px',
+                                  background: 'var(--teal-50)',
+                                  color: 'var(--teal-700)',
+                                  border: '1px solid var(--teal-border)',
+                                  fontSize: '0.78rem',
+                                  fontWeight: '700'
                                 }}
                               >
-                                {qty} {med}
+                                📦 {qty} {med}
                               </span>
                             ))}
                           </div>
                         </td>
-                        <td style={{ padding: '0.75rem 0.85rem', textAlign: 'center' }}>
+                        <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                           {isApproved ? (
-                            <span className="badge badge-optimal" style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem' }}>
-                              <CheckCircle2 size={12} /> Approved
+                            <span className="badge badge-optimal" style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem' }}>
+                              <CheckCircle2 size={13} /> Authorized
                             </span>
                           ) : (
-                            <span className="badge badge-critical" style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem' }}>
-                              <XCircle size={12} /> Rejected
+                            <span className="badge badge-critical" style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem' }}>
+                              <XCircle size={13} /> Declined
                             </span>
                           )}
                         </td>
-                        <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', color: 'var(--text-muted)' }}>
+                        <td style={{ padding: '0.75rem 1rem', textAlign: 'right', color: 'var(--text-muted)' }}>
                           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </td>
                       </tr>
 
-                      {/* Expandable Explanation Details */}
+                      {/* Expandable Clinical Record Details */}
                       {isExpanded && (
-                        <tr style={{ background: 'rgba(0, 0, 0, 0.35)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                          <td colSpan={6} style={{ padding: '1rem 1.25rem' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#38bdf8' }}>
-                                <ShieldCheck size={14} />
-                                <span>Gemini Audit Record & Administrator Explanation:</span>
+                        <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-card)' }}>
+                          <td colSpan={6} style={{ padding: '1.1rem 1.35rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--teal-700)' }}>
+                                <ShieldCheck size={15} />
+                                <span>Clinical Authorization Note & Decision Justification:</span>
                               </div>
-                              <div style={{ fontSize: '0.86rem', color: '#e2e8f0', lineHeight: 1.6, background: 'rgba(15, 23, 42, 0.6)', padding: '0.85rem', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                                {t.explanation || "No explanation logged."}
+                              <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.6, background: 'var(--bg-card)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-card)' }}>
+                                "{t.explanation || "No explanation logged for this transfer."}"
                               </div>
                               {t.counter_medicines && Object.keys(t.counter_medicines).length > 0 && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                  Reciprocal return transfer: {Object.entries(t.counter_medicines).map(([m, q]) => `${q} ${m}`).join(', ')}
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                  Reciprocal return items: {Object.entries(t.counter_medicines).map(([m, q]) => `${q} ${m}`).join(', ')}
                                 </div>
                               )}
                             </div>
@@ -333,14 +342,14 @@ export default function TradeHistoryTable({
         )
       )}
 
-      {/* CONTENT TAB 2: Incoming Medicine Requests */}
+      {/* TAB 2: Incoming Medicine Requests */}
       {activeTab === 'requests' && (
         medicineRequests.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '2.5rem 1rem',
             color: 'var(--text-muted)',
-            background: 'rgba(0, 0, 0, 0.2)',
+            background: 'var(--bg-surface)',
             borderRadius: 'var(--radius-md)',
             border: '1px dashed var(--border-subtle)',
             fontSize: '0.88rem'
@@ -350,20 +359,20 @@ export default function TradeHistoryTable({
         ) : (
           <div style={{
             overflowX: 'auto',
-            background: 'rgba(0, 0, 0, 0.25)',
+            background: 'var(--bg-card)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
+            border: '1px solid var(--border-card)'
           }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-muted)', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', width: '70px' }}>Req #</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', width: '160px' }}>Timestamp</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Requisition Routing</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Medicine Requested</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Gemini Message / Justification</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'center', width: '110px' }}>Status</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'right', width: '160px' }}>Actions</th>
+                <tr style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', textAlign: 'left', borderBottom: '1px solid var(--border-card)' }}>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', width: '70px' }}>Req #</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', width: '160px' }}>Timestamp</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700' }}>Requisition Routing</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700' }}>Medicine Requested</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700' }}>Gemini Message / Justification</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', textAlign: 'center', width: '110px' }}>Status</th>
+                  <th style={{ padding: '0.75rem 1rem', fontWeight: '700', textAlign: 'right', width: '180px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,41 +385,41 @@ export default function TradeHistoryTable({
                     <tr 
                       key={req.id || `${req.to}_${req.timestamp}`}
                       style={{ 
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                        borderBottom: '1px solid var(--border-subtle)',
                         background: 'transparent'
                       }}
                     >
-                      <td style={{ padding: '0.75rem 0.85rem', fontFamily: 'var(--font-mono)', fontWeight: '700', color: '#94a3b8' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--text-muted)' }}>
                         #{req.id || 1}
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
                         {req.timestamp ? new Date(req.timestamp).toLocaleTimeString() : 'Recent'}
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '600' }}>
-                          <span style={{ color: '#38bdf8' }}>{req.from}</span>
-                          <ArrowRight size={13} style={{ color: '#06b6d4' }} />
-                          <span style={{ color: '#ffffff' }}>{req.to}</span>
+                      <td style={{ padding: '0.75rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700' }}>
+                          <span style={{ color: 'var(--teal-700, #0d9488)' }}>{req.from}</span>
+                          <ArrowRight size={13} color="var(--text-muted)" />
+                          <span style={{ color: 'var(--blue-700, #2563eb)' }}>{req.to}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem' }}>
+                      <td style={{ padding: '0.75rem 1rem' }}>
                         <span style={{
                           padding: '0.2rem 0.55rem',
-                          borderRadius: '4px',
-                          background: 'rgba(16, 185, 129, 0.12)',
-                          color: '#34d399',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          borderRadius: '6px',
+                          background: 'var(--emerald-50)',
+                          color: 'var(--emerald-700)',
+                          border: '1px solid var(--emerald-100)',
                           fontSize: '0.78rem',
                           fontFamily: 'var(--font-mono)',
-                          fontWeight: '600'
+                          fontWeight: '700'
                         }}>
-                          {req.quantity} {req.medicine}
+                          📦 {req.quantity} {req.medicine}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem', color: '#cbd5e1', fontSize: '0.8rem', maxWidth: '320px' }}>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', fontSize: '0.82rem', maxWidth: '320px' }}>
                         {req.message || "Urgent medicine requisition"}
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem', textAlign: 'center' }}>
+                      <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                         {isPending && (
                           <span className="badge badge-warning" style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem' }}>
                             <Clock size={12} /> PENDING
@@ -427,20 +436,20 @@ export default function TradeHistoryTable({
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right' }}>
+                      <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
                         {isPending ? (
                           <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
                             <button
                               onClick={() => handleUpdateStatus(req.id, 'ACCEPTED')}
                               disabled={updatingId === req.id}
                               style={{
-                                background: 'rgba(16, 185, 129, 0.2)',
-                                border: '1px solid rgba(16, 185, 129, 0.4)',
-                                color: '#34d399',
-                                padding: '0.28rem 0.65rem',
-                                borderRadius: '4px',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
+                                background: 'var(--emerald-50, rgba(16, 185, 129, 0.2))',
+                                border: '1px solid var(--emerald-500, rgba(16, 185, 129, 0.4))',
+                                color: 'var(--emerald-700, #047857)',
+                                padding: '0.3rem 0.65rem',
+                                borderRadius: '6px',
+                                fontSize: '0.76rem',
+                                fontWeight: '700',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -449,19 +458,19 @@ export default function TradeHistoryTable({
                               title="Approve requisition and execute medicine transfer"
                             >
                               <Check size={12} />
-                              <span>Approve & Transfer</span>
+                              <span>Approve</span>
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(req.id, 'REJECTED')}
                               disabled={updatingId === req.id}
                               style={{
-                                background: 'rgba(239, 68, 68, 0.2)',
-                                border: '1px solid rgba(239, 68, 68, 0.4)',
-                                color: '#f87171',
-                                padding: '0.25rem 0.55rem',
-                                borderRadius: '4px',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
+                                background: 'var(--rose-50, rgba(239, 68, 68, 0.2))',
+                                border: '1px solid var(--rose-300, rgba(239, 68, 68, 0.4))',
+                                color: 'var(--rose-700, #b91c1c)',
+                                padding: '0.3rem 0.55rem',
+                                borderRadius: '6px',
+                                fontSize: '0.76rem',
+                                fontWeight: '700',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -474,7 +483,7 @@ export default function TradeHistoryTable({
                             </button>
                           </div>
                         ) : (
-                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                             Archived
                           </span>
                         )}

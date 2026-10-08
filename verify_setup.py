@@ -9,8 +9,12 @@ import os
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        out_recon = getattr(sys.stdout, "reconfigure", None)
+        err_recon = getattr(sys.stderr, "reconfigure", None)
+        if callable(out_recon):
+            out_recon(encoding="utf-8", errors="replace")
+        if callable(err_recon):
+            err_recon(encoding="utf-8", errors="replace")
     except Exception:
         pass
 

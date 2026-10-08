@@ -48,7 +48,7 @@ def ask_gemini(
     json_schema: Optional[dict] = None,
     temperature: float = 0.7,
     max_tokens: int = 2048
-) -> Union[str, dict]:
+) -> Any:
     """
     Send a request to Gemini or Grok with automatic retries and structured output support.
     """
@@ -211,9 +211,12 @@ def ask_gemini(
 
             # Extract response text safely
             response_text = response.text if hasattr(response, "text") and response.text else None
-            if not response_text:
-                if response.candidates and response.candidates[0].content.parts:
-                    response_text = response.candidates[0].content.parts[0].text
+            if not response_text and hasattr(response, "candidates") and response.candidates:
+                first_cand = response.candidates[0]
+                content = getattr(first_cand, "content", None)
+                parts = getattr(content, "parts", None) if content else None
+                if parts and len(parts) > 0:
+                    response_text = getattr(parts[0], "text", None)
             if not response_text:
                 raise ValueError("Empty response received from Gemini")
 

@@ -20,7 +20,13 @@ from dotenv import set_key, load_dotenv
 sys.path.insert(0, str(Path(__file__).parent))
 
 import config
-from data import generate_hospitals
+from data import (
+    generate_hospitals, 
+    load_dakshina_kannada_hospitals, 
+    get_all_taluks, 
+    get_hospitals_by_taluk,
+    ALL_DK_HOSPITALS
+)
 from negotiation import run_negotiation, execute_trade, reject_trade
 from llm_client import get_reasoning_log, get_reasoning_stats, clear_reasoning_log
 from chatbot import ask_supply_chain_assistant
@@ -28,7 +34,7 @@ import agents as agents_module
 
 app = FastAPI(
     title="MedFlow-AI API",
-    description="Multi-Agent LLM Medical Supply Chain Negotiation Backend",
+    description="Multi-Agent LLM Medical Supply Chain Negotiation Backend — Dakshina Kannada Network",
     version="2.0.0"
 )
 
@@ -55,13 +61,16 @@ from state import state, SystemState
 class SaveKeyRequest(BaseModel):
     api_key: str
 
+class ScenarioRequest(BaseModel):
+    taluk: Optional[str] = None
+    count: Optional[int] = 3
+    hospital_names: Optional[List[str]] = None
 
 class ChatRequest(BaseModel):
     question: str
 
-
 def format_hospitals_data():
-    """Serialize hospital agents for JSON response."""
+    """Serialize hospital agents for JSON response including Dakshina Kannada metadata."""
     result = []
     for hospital in state.hospitals:
         shortages = hospital.detect_shortages()
@@ -81,6 +90,11 @@ def format_hospitals_data():
         result.append({
             "name": hospital.name,
             "location": hospital.location,
+            "taluk": getattr(hospital, "taluk", "Dakshina Kannada"),
+            "type": getattr(hospital, "hospital_type", "Government"),
+            "latitude": getattr(hospital, "latitude", None),
+            "longitude": getattr(hospital, "longitude", None),
+            "hfr_id": getattr(hospital, "hfr_id", ""),
             "inventory": hospital.inventory,
             "thresholds": hospital.thresholds,
             "shortages": shortages,
@@ -91,9 +105,15 @@ def format_hospitals_data():
 
 # === API ENDPOINTS ===
 
+frontend_dist = Path(__file__).parent / "frontend" / "dist"
+
 @app.get("/")
 def root():
-    """Basic API landing endpoint."""
+    """Serves the built React application if available, else API health info."""
+    index_file = frontend_dist / "index.html"
+    if index_file.is_file():
+        from fastapi.responses import FileResponse
+        return FileResponse(index_file)
     return {
         "status": "online",
         "service": "MedFlow-AI",
@@ -136,6 +156,9 @@ def get_system_status():
     )
     return {
         "status": "online",
+        "district": "Dakshina Kannada",
+        "active_taluk": state.active_taluk or "All",
+        "total_facilities": len(ALL_DK_HOSPITALS),
         "api_key_configured": has_valid_key,
         "provider": config.LLM_PROVIDER,
         "model": config.MODEL_NAME,
@@ -187,20 +210,52 @@ def save_api_key(req: SaveKeyRequest):
         "message": f"{provider_name} API key connected successfully."
     }
 
+@app.get("/api/dakshina-kannada/directory")
+def get_dakshina_kannada_directory():
+    """Return all 28 real hospitals in Dakshina Kannada with metadata."""
+    hospitals = load_dakshina_kannada_hospitals()
+    return {
+        "district": "Dakshina Kannada",
+        "total": len(hospitals),
+        "hospitals": hospitals
+    }
+
+@app.get("/api/dakshina-kannada/taluks")
+def get_dakshina_kannada_taluks():
+    """Return taluk breakdown with hospital counts."""
+    hospitals = load_dakshina_kannada_hospitals()
+    counts = {}
+    for h in hospitals:
+        t = h.get("taluk", "Dakshina Kannada")
+        counts[t] = counts.get(t, 0) + 1
+
+    taluk_list = [{"name": "All", "label": "All Dakshina Kannada", "count": len(hospitals)}]
+    for t in sorted(counts.keys()):
+        taluk_list.append({"name": t, "label": f"{t} Taluk", "count": counts[t]})
+
+    return {
+        "taluks": taluk_list
+    }
+
 @app.get("/api/hospitals")
 def get_hospitals():
     """Retrieve the current state of all hospitals in the network."""
     return {
         "scenario_count": state.scenario_count,
+        "active_taluk": state.active_taluk or "All",
         "hospitals": format_hospitals_data()
     }
 
 @app.post("/api/scenario/new")
-def new_scenario():
-    """Generate a brand new random hospital network crisis scenario."""
-    state.reset_scenario()
+def new_scenario(req: Optional[ScenarioRequest] = None):
+    """Generate a brand new random hospital network crisis scenario in Dakshina Kannada."""
+    taluk = req.taluk if req else None
+    count = req.count if req and req.count else 3
+    hospital_names = req.hospital_names if req else None
+    state.reset_scenario(taluk=taluk, count=count, hospital_names=hospital_names)
     return {
         "scenario_count": state.scenario_count,
+        "active_taluk": state.active_taluk or "All",
         "hospitals": format_hospitals_data(),
         "events": state.events,
         "pending_trade": state.pending_trade
@@ -255,6 +310,13 @@ def approve_trade():
             "report": report
         }
         state.trade_history.append(trade_record)
+
+        # Sync to Supabase if configured
+        try:
+            import supabase_client
+            supabase_client.save_trade_record(trade_record)
+        except Exception as sb_err:
+            print(f"[Supabase Sync Note]: {sb_err}")
 
         state.events.append({
             "step": len(state.events) + 1,
@@ -407,10 +469,14 @@ if frontend_dist.exists():
         return FileResponse(frontend_dist / "index.html")
 
 if __name__ == "__main__":
-    if hasattr(sys.stdout, "reconfigure"):
+    reconf = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconf):
         try:
-            sys.stdout.reconfigure(encoding="utf-8")
+            reconf(encoding="utf-8")
         except Exception:
             pass
-    print("[*] Starting MedFlow-AI Server on http://127.0.0.1:8000")
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "8000"))
+    print(f"[*] Starting MedFlow-AI Server on http://{host}:{port}")
+    uvicorn.run("server:app", host=host, port=port, reload=True)
