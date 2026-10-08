@@ -134,6 +134,13 @@ class HospitalAgent:
         """
         self.name = name
         self.location = location
+        # Coordinates (lat, lng) for geospatial mapping
+        coords_map = {
+            "City General Hospital": (12.9716, 77.5946),
+            "District Government Hospital": (12.9500, 77.6200),
+            "Rural Primary Health Centre": (12.9900, 77.5500),
+        }
+        self.coords = coords_map.get(name, (12.9716, 77.5946))
         self.inventory = inventory.copy()  # Avoid mutation bugs
         self.thresholds = thresholds.copy()
 

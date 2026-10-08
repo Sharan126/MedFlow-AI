@@ -6,6 +6,8 @@ import PendingTradePanel from './components/PendingTradePanel';
 import TradeHistoryTable from './components/TradeHistoryTable';
 import ReasoningDrawer from './components/ReasoningDrawer';
 import ApiKeyModal from './components/ApiKeyModal';
+import FindMedicineButton from './components/FindMedicineButton';
+import FindMedicineModal from './components/FindMedicineModal';
 import { Play, Sparkles, Brain, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle } from 'lucide-react';
 
 export default function App() {
@@ -16,23 +18,26 @@ export default function App() {
   const [pendingTrade, setPendingTrade] = useState(null);
   const [tradeHistory, setTradeHistory] = useState({ trades: [], stats: { approved: 0, rejected: 0, total_transferred: 0 } });
   const [reasoningData, setReasoningData] = useState({ logs: [], stats: {} });
+  const [medicineRequests, setMedicineRequests] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [isNegotiating, setIsNegotiating] = useState(false);
   const [processingTrade, setProcessingTrade] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
+  const [showFindMedicineModal, setShowFindMedicineModal] = useState(false);
   const [errorBanner, setErrorBanner] = useState(null);
 
-  // Fetch initial system state
+  // Fetch initial system state and medicine requests
   const fetchAllData = async () => {
     try {
-      const [statusRes, hospRes, eventsRes, historyRes, reasoningRes] = await Promise.all([
+      const [statusRes, hospRes, eventsRes, historyRes, reasoningRes, requestsRes] = await Promise.all([
         fetch('/api/status').then(r => r.json()),
         fetch('/api/hospitals').then(r => r.json()),
         fetch('/api/events').then(r => r.json()),
         fetch('/api/history').then(r => r.json()),
-        fetch('/api/reasoning').then(r => r.json())
+        fetch('/api/reasoning').then(r => r.json()),
+        fetch('/api/medicine-requests').then(r => r.json()).catch(() => ({ requests: [] }))
       ]);
 
       setStatus(statusRes);
@@ -42,8 +47,18 @@ export default function App() {
       setPendingTrade(eventsRes.pending_trade);
       setTradeHistory(historyRes);
       setReasoningData(reasoningRes);
+      setMedicineRequests(requestsRes.requests || []);
     } catch (err) {
       console.error("Failed to connect to MedFlow-AI backend:", err);
+    }
+  };
+
+  const fetchMedicineRequests = async () => {
+    try {
+      const res = await fetch('/api/medicine-requests').then(r => r.json());
+      setMedicineRequests(res.requests || []);
+    } catch (err) {
+      console.error("Failed to fetch medicine requests:", err);
     }
   };
 
@@ -187,6 +202,7 @@ export default function App() {
         scenarioCount={scenarioCount}
         onNewScenario={handleNewScenario}
         onOpenKeyModal={() => setShowKeyModal(true)}
+        onOpenFindMedicine={() => setShowFindMedicineModal(true)}
         loading={loading}
       />
 
@@ -242,6 +258,9 @@ export default function App() {
               <Sparkles size={18} className={isNegotiating ? "spin" : ""} />
               <span>{isNegotiating ? 'Negotiating with Gemini 2.5...' : '🚀 Start AI Negotiation'}</span>
             </button>
+
+            {/* Find Medicine Nearby Trigger */}
+            <FindMedicineButton onClick={() => setShowFindMedicineModal(true)} />
 
             {pendingTrade && (
               <span className="badge badge-warning" style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}>
@@ -334,14 +353,26 @@ export default function App() {
           </section>
         )}
 
-        {/* ROW 5: Immutable Trade History Audit Log */}
+        {/* ROW 5: Immutable Trade History Audit Log & Requisition Requests */}
         <section>
           <TradeHistoryTable 
             historyData={tradeHistory}
+            medicineRequests={medicineRequests}
+            onRefreshRequests={fetchMedicineRequests}
           />
         </section>
 
       </main>
+
+      {/* Interactive Find Medicine Nearby Modal */}
+      <FindMedicineModal 
+        isOpen={showFindMedicineModal}
+        onClose={() => setShowFindMedicineModal(false)}
+        onRequestSuccess={() => {
+          fetchMedicineRequests();
+          fetchAllData();
+        }}
+      />
 
       {/* API Key Modal */}
       <ApiKeyModal 

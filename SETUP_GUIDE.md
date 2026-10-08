@@ -2,7 +2,7 @@
 
 **Last Updated:** October 8, 2026
 
-This guide will get MedFlow-AI in under 5 minutes.
+This guide will get MedFlow-AI running in under 5 minutes.
 
 ---
 

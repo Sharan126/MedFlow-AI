@@ -3,9 +3,11 @@
     "."
   ],
   "pythonPlatform": "Windows",
-  "pythonVersion": "3.13",
+  "pythonVersion": "3.14",
   "extraPaths": [
-    "C:\\Users\\PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages"
+    "C:\\Users\\Lenovo\\AppData\\Roaming\\Python\\Python314\\site-packages",
+    "C:\\Users\\Lenovo\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages"
   ],
-  "reportMissingImports": "none"
+  "reportMissingImports": "none",
+  "reportOptionalMemberAccess": "none"
 }

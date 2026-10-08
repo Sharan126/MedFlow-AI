@@ -39,6 +39,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Modular Map & Medicine Requisition Routers
+from backend.routes.medicine_request import router as medicine_request_router
+from backend.routes.nearby_hospitals import router as nearby_hospitals_router
+
+app.include_router(medicine_request_router)
+app.include_router(nearby_hospitals_router)
+
 # === IN-MEMORY STATE (Mirroring previous Streamlit session state) ===
 class SystemState:
     def __init__(self):
@@ -144,8 +151,8 @@ def save_api_key(req: SaveKeyRequest):
         # Re-initialize Gemini client
         import llm_client
         try:
-            from google import genai
-            llm_client.client = genai.Client(api_key=key)
+            from google import genai  # type: ignore
+            llm_client.client = genai.Client(api_key=key)  # type: ignore
         except Exception:
             pass
 
@@ -354,5 +361,10 @@ if frontend_dist.exists():
         return FileResponse(frontend_dist / "index.html")
 
 if __name__ == "__main__":
-    print("🚀 Starting MedFlow-AI Server on http://127.0.0.1:8000")
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    print("[*] Starting MedFlow-AI Server on http://127.0.0.1:8000")
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)

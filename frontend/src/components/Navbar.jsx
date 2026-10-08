@@ -1,11 +1,13 @@
 import React from 'react';
 import { Activity, ShieldCheck, Key, RefreshCw, Cpu, Database, AlertCircle } from 'lucide-react';
+import FindMedicineButton from './FindMedicineButton';
 
 export default function Navbar({ 
   status, 
   scenarioCount, 
   onNewScenario, 
   onOpenKeyModal, 
+  onOpenFindMedicine,
   loading 
 }) {
   const isKeyConfigured = status?.api_key_configured;
@@ -91,28 +93,31 @@ export default function Navbar({
           <span>Scenario #{scenarioCount}</span>
         </div>
 
-        {/* API Key Status Pill */}
+        {/* Replace Gemini API Ready button with Find Medicine Nearby button */}
+        <FindMedicineButton onClick={onOpenFindMedicine} />
+
+        {/* Gemini API Key Configuration Trigger */}
         <button 
           onClick={onOpenKeyModal}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.45rem 0.95rem',
+            gap: '0.4rem',
+            padding: '0.52rem 0.75rem',
             borderRadius: 'var(--radius-md)',
             background: isKeyConfigured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.15)',
             border: `1px solid ${isKeyConfigured ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.5)'}`,
             color: isKeyConfigured ? '#34d399' : '#f87171',
-            fontSize: '0.82rem',
+            fontSize: '0.8rem',
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
-          title={isKeyConfigured ? "Gemini API key is active" : "Click to configure Gemini API Key"}
+          title={isKeyConfigured ? "Gemini API key is active (Click to change)" : "Configure Gemini API Key"}
+          id="btn-navbar-key"
         >
-          {isKeyConfigured ? <ShieldCheck size={16} /> : <AlertCircle size={16} />}
-          <span>{isKeyConfigured ? 'Gemini API Ready' : 'API Key Required'}</span>
-          <Key size={13} style={{ opacity: 0.6 }} />
+          {isKeyConfigured ? <ShieldCheck size={15} /> : <AlertCircle size={15} />}
+          <Key size={13} style={{ opacity: 0.8 }} />
         </button>
 
         {/* Generate New Scenario Button */}
