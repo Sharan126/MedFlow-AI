@@ -1,11 +1,13 @@
 import React from 'react';
-import { Activity, ShieldCheck, Key, RefreshCw, Moon, Sun, AlertCircle, Building2, MapPin } from 'lucide-react';
+import { Activity, ShieldCheck, Key, RefreshCw, Moon, Sun, AlertCircle, MapPin } from 'lucide-react';
+import FindMedicineButton from './FindMedicineButton';
 
 export default function Navbar({ 
   status, 
   scenarioCount, 
   onNewScenario, 
   onOpenKeyModal, 
+  onOpenFindMedicine,
   loading,
   isDark,
   onToggleTheme
@@ -67,7 +69,7 @@ export default function Navbar({
             </span>
           </div>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-            Autonomous Medical Supply Coordinator • Human-in-the-Loop Clinical Verification
+            Autonomous Medical Supply Coordinator • Dakshina Kannada Corridor & Emergency Requisition
           </p>
         </div>
       </div>
@@ -106,6 +108,11 @@ export default function Navbar({
           <span>Scenario #{scenarioCount}</span>
         </div>
 
+        {/* Emergency Map Requisition Button */}
+        {onOpenFindMedicine && (
+          <FindMedicineButton onClick={onOpenFindMedicine} label="🗺️ Emergency Map" />
+        )}
+
         {/* AI Key Status Button */}
         <button 
           onClick={onOpenKeyModal}
@@ -124,6 +131,7 @@ export default function Navbar({
             transition: 'all 0.2s ease'
           }}
           title={isKeyConfigured ? "Gemini AI is active and responding" : "Click to set API Key"}
+          id="btn-navbar-key"
         >
           {isKeyConfigured ? <ShieldCheck size={16} /> : <AlertCircle size={16} />}
           <span>{isKeyConfigured ? 'Gemini AI Active' : 'Configure API Key'}</span>

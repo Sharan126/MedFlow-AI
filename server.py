@@ -11,6 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 import uvicorn
 from dotenv import set_key, load_dotenv
@@ -28,6 +29,7 @@ from data import (
 )
 from negotiation import run_negotiation, execute_trade, reject_trade
 from llm_client import get_reasoning_log, get_reasoning_stats, clear_reasoning_log
+from chatbot import ask_supply_chain_assistant
 import agents as agents_module
 
 app = FastAPI(
@@ -45,26 +47,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === IN-MEMORY STATE ===
-class SystemState:
-    def __init__(self):
-        self.active_taluk: Optional[str] = "All"
-        self.active_count: int = 3
-        self.hospitals = generate_hospitals()
-        self.events: List[Dict[str, Any]] = []
-        self.pending_trade: Optional[Dict[str, Any]] = None
-        self.trade_history: List[Dict[str, Any]] = []
-        self.scenario_count: int = 1
+# Modular Map & Medicine Requisition Routers
+from backend.routes.medicine_request import router as medicine_request_router
+from backend.routes.nearby_hospitals import router as nearby_hospitals_router
 
-    def reset_scenario(self, taluk: Optional[str] = None, count: int = 3, hospital_names: Optional[List[str]] = None):
-        self.active_taluk = taluk or "All"
-        self.active_count = count
-        self.hospitals = generate_hospitals(taluk=taluk, count=count, hospital_names=hospital_names)
-        self.events = []
-        self.pending_trade = None
-        self.scenario_count += 1
+app.include_router(medicine_request_router)
+app.include_router(nearby_hospitals_router)
 
-state = SystemState()
+# === CENTRAL IN-MEMORY STATE ===
+from state import state, SystemState
 
 # === REQUEST MODELS ===
 class SaveKeyRequest(BaseModel):
@@ -74,6 +65,9 @@ class ScenarioRequest(BaseModel):
     taluk: Optional[str] = None
     count: Optional[int] = 3
     hospital_names: Optional[List[str]] = None
+
+class ChatRequest(BaseModel):
+    question: str
 
 def format_hospitals_data():
     """Serialize hospital agents for JSON response including Dakshina Kannada metadata."""
@@ -110,6 +104,39 @@ def format_hospitals_data():
     return result
 
 # === API ENDPOINTS ===
+
+@app.get("/")
+def root():
+    """Basic API landing endpoint."""
+    return {
+        "status": "online",
+        "service": "MedFlow-AI",
+        "version": "2.0.0",
+        "message": "MedFlow-AI backend is running successfully.",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "status_endpoint": "/api/status"
+    }
+
+
+@app.get("/health")
+def health_check():
+    """Lightweight health-check endpoint for the frontend/deployment."""
+    return {
+        "status": "healthy",
+        "service": "MedFlow-AI"
+    }
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Provide the browser tab icon when the API landing page is opened."""
+    return Response(
+        content='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+                '<text y=".9em" font-size="90">🏥</text></svg>',
+        media_type="image/svg+xml"
+    )
+
 
 @app.get("/api/status")
 def get_system_status():
@@ -167,8 +194,8 @@ def save_api_key(req: SaveKeyRequest):
         # Re-initialize Gemini client
         import llm_client
         try:
-            from google import genai
-            llm_client.client = genai.Client(api_key=key)
+            from google import genai  # type: ignore
+            llm_client.client = genai.Client(api_key=key)  # type: ignore
         except Exception:
             pass
 
@@ -391,6 +418,26 @@ def get_reasoning():
         "stats": stats
     }
 
+
+@app.post("/api/chat")
+def chat_endpoint(payload: ChatRequest):
+    """Answer a question using a read-only snapshot of the current system state."""
+    question = payload.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    try:
+        response = ask_supply_chain_assistant(
+            question,
+            format_hospitals_data(),
+            state.trade_history,
+            state.pending_trade,
+        )
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Assistant request failed: {e}")
+
+
 @app.post("/api/reasoning/clear")
 def clear_reasoning():
     """Clear reasoning logs."""
@@ -416,5 +463,11 @@ if frontend_dist.exists():
         return FileResponse(frontend_dist / "index.html")
 
 if __name__ == "__main__":
-    print("🚀 Starting MedFlow-AI Server on http://127.0.0.1:8000")
+    reconf = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconf):
+        try:
+            reconf(encoding="utf-8")
+        except Exception:
+            pass
+    print("[*] Starting MedFlow-AI Server on http://127.0.0.1:8000")
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
