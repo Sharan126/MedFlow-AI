@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { History, CheckCircle2, XCircle, ChevronDown, ChevronUp, Package, ArrowRight, ShieldCheck, Inbox, Clock, Check, X } from 'lucide-react';
 import { updateMedicineRequestStatus } from '../api/medicineRequest';
 
-export default function TradeHistoryTable({ historyData, medicineRequests = [], onRefreshRequests }) {
+export default function TradeHistoryTable({ 
+  historyData, 
+  medicineRequests = [], 
+  onRefreshRequests, 
+  onOpenFindMedicine 
+}) {
   const [activeTab, setActiveTab] = useState('trades'); // 'trades' | 'requests'
   const [expandedId, setExpandedId] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
@@ -122,6 +127,29 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
               )}
             </button>
           </div>
+
+          {/* Action button when on requests tab */}
+          {activeTab === 'requests' && onOpenFindMedicine && (
+            <button
+              onClick={onOpenFindMedicine}
+              style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(6, 182, 212, 0.22))',
+                border: '1px solid rgba(16, 185, 129, 0.45)',
+                color: '#6ee7b7',
+                padding: '0.4rem 0.85rem',
+                borderRadius: '6px',
+                fontSize: '0.82rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+              title="Open map to search nearby hospitals and dispatch an emergency requisition"
+            >
+              <span>🗺️ New Map Requisition</span>
+            </button>
+          )}
 
           {/* KPI Counter Chips (when on trades tab) */}
           {activeTab === 'trades' && (
@@ -317,7 +345,7 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
             border: '1px dashed var(--border-subtle)',
             fontSize: '0.88rem'
           }}>
-            No incoming medicine requests. Use the <strong>🗺️ Find Medicine Nearby</strong> map above to locate stock and submit inter-hospital requisitions.
+            No manual requisitions logged yet. When emergency requests are submitted via the <strong>🗺️ Emergency Map</strong>, they appear here for verification and one-click transfer execution.
           </div>
         ) : (
           <div style={{
@@ -335,7 +363,7 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
                   <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Medicine Requested</th>
                   <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600' }}>Gemini Message / Justification</th>
                   <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'center', width: '110px' }}>Status</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'right', width: '140px' }}>Actions</th>
+                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: '600', textAlign: 'right', width: '160px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -390,7 +418,7 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
                         )}
                         {isAccepted && (
                           <span className="badge badge-optimal" style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem' }}>
-                            <CheckCircle2 size={12} /> ACCEPTED
+                            <CheckCircle2 size={12} /> APPROVED
                           </span>
                         )}
                         {isRejected && (
@@ -409,7 +437,7 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
                                 background: 'rgba(16, 185, 129, 0.2)',
                                 border: '1px solid rgba(16, 185, 129, 0.4)',
                                 color: '#34d399',
-                                padding: '0.25rem 0.55rem',
+                                padding: '0.28rem 0.65rem',
                                 borderRadius: '4px',
                                 fontSize: '0.75rem',
                                 fontWeight: '600',
@@ -418,10 +446,10 @@ export default function TradeHistoryTable({ historyData, medicineRequests = [], 
                                 alignItems: 'center',
                                 gap: '0.25rem'
                               }}
-                              title="Accept requisition request"
+                              title="Approve requisition and execute medicine transfer"
                             >
                               <Check size={12} />
-                              <span>Accept</span>
+                              <span>Approve & Transfer</span>
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(req.id, 'REJECTED')}

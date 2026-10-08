@@ -46,22 +46,8 @@ from backend.routes.nearby_hospitals import router as nearby_hospitals_router
 app.include_router(medicine_request_router)
 app.include_router(nearby_hospitals_router)
 
-# === IN-MEMORY STATE (Mirroring previous Streamlit session state) ===
-class SystemState:
-    def __init__(self):
-        self.hospitals = generate_hospitals()
-        self.events: List[Dict[str, Any]] = []
-        self.pending_trade: Optional[Dict[str, Any]] = None
-        self.trade_history: List[Dict[str, Any]] = []
-        self.scenario_count: int = 1
-
-    def reset_scenario(self):
-        self.hospitals = generate_hospitals()
-        self.events = []
-        self.pending_trade = None
-        self.scenario_count += 1
-
-state = SystemState()
+# === CENTRAL IN-MEMORY STATE ===
+from state import state, SystemState
 
 # === REQUEST MODELS ===
 class SaveKeyRequest(BaseModel):

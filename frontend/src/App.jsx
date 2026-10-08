@@ -111,6 +111,13 @@ export default function App() {
       ]);
       setReasoningData(reasoningRes);
       setStatus(statusRes);
+
+      // Smoothly scroll to the verification panel for human verification
+      if (data.pending_trade) {
+        setTimeout(() => {
+          document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' });
+        }, 250);
+      }
     } catch (err) {
       setErrorBanner(err.message);
     } finally {
@@ -210,9 +217,10 @@ export default function App() {
       <main style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         
         {/* Error Alert Banner */}
+        {/* Error Alert Banner with Emergency Map Fallback Trigger */}
         {errorBanner && (
           <div style={{
-            padding: '1rem 1.5rem',
+            padding: '1.15rem 1.5rem',
             borderRadius: 'var(--radius-md)',
             background: 'rgba(239, 68, 68, 0.15)',
             border: '1px solid rgba(239, 68, 68, 0.45)',
@@ -220,19 +228,39 @@ export default function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: '1rem',
             animation: 'fadeIn 0.2s ease'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <AlertTriangle size={20} color="#ef4444" />
-              <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{errorBanner}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <AlertTriangle size={22} color="#ef4444" />
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '0.92rem', color: '#fca5a5' }}>
+                  AI Negotiation / Server Interruption
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#fecaca', marginTop: '0.15rem' }}>
+                  {errorBanner}. Manual Emergency Override activated: use the Interactive Map to filter stock and request medicines.
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => setErrorBanner(null)}
-              style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer', fontWeight: '700' }}
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                className="btn btn-warning"
+                onClick={() => {
+                  setErrorBanner(null);
+                  setShowFindMedicineModal(true);
+                }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: '700' }}
+              >
+                🗺️ Open Emergency Map Requisition
+              </button>
+              <button 
+                onClick={() => setErrorBanner(null)}
+                style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 
@@ -250,21 +278,25 @@ export default function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <button
               className="btn btn-primary"
-              onClick={handleStartNegotiation}
-              disabled={isNegotiating || Boolean(pendingTrade)}
+              onClick={pendingTrade ? () => document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' }) : handleStartNegotiation}
+              disabled={isNegotiating}
               id="btn-start-negotiation"
               style={{ padding: '0.8rem 1.6rem', fontSize: '0.95rem' }}
+              title={pendingTrade ? "Review pending trade proposal below" : "Run autonomous multi-agent AI negotiation"}
             >
               <Sparkles size={18} className={isNegotiating ? "spin" : ""} />
-              <span>{isNegotiating ? 'Negotiating with Gemini 2.5...' : '🚀 Start AI Negotiation'}</span>
+              <span>
+                {isNegotiating 
+                  ? 'AI Agents Negotiating...' 
+                  : pendingTrade 
+                    ? '⚠️ Trade Pending Approval (Review Below)' 
+                    : '🚀 Start AI Negotiation'}
+              </span>
             </button>
-
-            {/* Find Medicine Nearby Trigger */}
-            <FindMedicineButton onClick={() => setShowFindMedicineModal(true)} />
 
             {pendingTrade && (
               <span className="badge badge-warning" style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}>
-                ⚠️ Trade Pending Approval Below
+                ⚠️ 1% Human Verification Required
               </span>
             )}
           </div>
@@ -358,7 +390,11 @@ export default function App() {
           <TradeHistoryTable 
             historyData={tradeHistory}
             medicineRequests={medicineRequests}
-            onRefreshRequests={fetchMedicineRequests}
+            onRefreshRequests={async () => {
+              await fetchMedicineRequests();
+              await fetchAllData();
+            }}
+            onOpenFindMedicine={() => setShowFindMedicineModal(true)}
           />
         </section>
 

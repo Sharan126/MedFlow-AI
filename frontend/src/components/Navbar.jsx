@@ -70,7 +70,7 @@ export default function Navbar({
             </span>
           </div>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Self-Healing Medical Supply Chain • Human-in-the-Loop Audit Trail
+            Self-Healing Medical Supply Chain • Autonomous Multi-Agent Negotiation & Emergency Map Override
           </p>
         </div>
       </div>
@@ -93,8 +93,8 @@ export default function Navbar({
           <span>Scenario #{scenarioCount}</span>
         </div>
 
-        {/* Replace Gemini API Ready button with Find Medicine Nearby button */}
-        <FindMedicineButton onClick={onOpenFindMedicine} />
+        {/* Emergency Map Requisition Button */}
+        <FindMedicineButton onClick={onOpenFindMedicine} label="🗺️ Emergency Map" />
 
         {/* Gemini API Key Configuration Trigger */}
         <button 
@@ -102,11 +102,11 @@ export default function Navbar({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.52rem 0.75rem',
+            gap: '0.45rem',
+            padding: '0.48rem 0.85rem',
             borderRadius: 'var(--radius-md)',
-            background: isKeyConfigured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.15)',
-            border: `1px solid ${isKeyConfigured ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.5)'}`,
+            background: isKeyConfigured ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.15)',
+            border: `1px solid ${isKeyConfigured ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.5)'}`,
             color: isKeyConfigured ? '#34d399' : '#f87171',
             fontSize: '0.8rem',
             fontWeight: '600',
@@ -117,7 +117,8 @@ export default function Navbar({
           id="btn-navbar-key"
         >
           {isKeyConfigured ? <ShieldCheck size={15} /> : <AlertCircle size={15} />}
-          <Key size={13} style={{ opacity: 0.8 }} />
+          <span>{isKeyConfigured ? 'Gemini Active' : 'API Key Required'}</span>
+          <Key size={12} style={{ opacity: 0.7 }} />
         </button>
 
         {/* Generate New Scenario Button */}
@@ -125,7 +126,7 @@ export default function Navbar({
           className="btn btn-secondary"
           onClick={onNewScenario}
           disabled={loading}
-          style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+          style={{ padding: '0.52rem 1rem', fontSize: '0.85rem' }}
           id="btn-generate-scenario"
         >
           <RefreshCw size={15} className={loading ? "spin" : ""} />
