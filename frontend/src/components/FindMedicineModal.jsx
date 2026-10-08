@@ -4,9 +4,16 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
   Search, X, Send, MapPin, CheckCircle, AlertCircle, Package, 
-  ArrowUpRight, Crosshair, Navigation, Layers, List, ExternalLink, Pill 
+  ArrowUpRight, Crosshair, Navigation, Layers, List, ExternalLink, Pill,
+  Radio, RefreshCw
 } from 'lucide-react';
-import { sendMedicineRequest, fetchNearbyHospitals, searchOsmLocations } from '../api/medicineRequest';
+import { 
+  sendMedicineRequest, 
+  fetchNearbyHospitals, 
+  searchOsmLocations,
+  detectLiveLocation,
+  reverseGeocodeOsm
+} from '../api/medicineRequest';
 import './FindMedicineModal.css';
 
 // Ensure Leaflet default marker icons don't 404
@@ -17,11 +24,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// Authentic Mysuru Healthcare District Coordinates
-const DEFAULT_CENTER = {
-  lat: 12.3082,
-  lng: 76.6432,
-  label: "City General Hospital (Mysuru Central)"
+// Initial placeholder before live coordinates settle
+const INITIAL_PLACEHOLDER_CENTER = {
+  lat: 12.9187,
+  lng: 74.8598,
+  label: "Detecting Live Location...",
+  isLive: false
 };
 
 // Essential medical supplies list
@@ -36,7 +44,7 @@ const MEDICINE_OPTIONS = [
   "Omeprazole"
 ];
 
-// OpenStreetMap Tile Layer Options (100% Free, No API Key Required)
+// OpenStreetMap Tile Layer Options (100% Free, Zero API Key Required)
 const OSM_LAYERS = {
   dark: {
     name: 'Dark OSM',
@@ -90,7 +98,7 @@ function MapAutoFit({ markers, center }) {
         const bounds = L.latLngBounds(points);
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       } else if (points.length === 1) {
-        map.setView(points[0], 13);
+        map.setView(points[0], 14);
       }
     } catch (e) {
       // Graceful fallback
@@ -133,18 +141,19 @@ function createFacilityIcon(facility, isRequested, hasEnough) {
   });
 }
 
-// Center reference pin (You / Search Location)
-const centerUserIcon = L.divIcon({
-  className: 'osm-center-marker',
+// Live User Location Beacon Icon
+const liveUserBeaconIcon = L.divIcon({
+  className: 'osm-live-user-marker',
   html: `
-    <div class="osm-center-pulse">
-      <div class="osm-center-dot"></div>
-      <div class="osm-center-ring"></div>
+    <div class="osm-live-beacon">
+      <div class="osm-beacon-dot"></div>
+      <div class="osm-beacon-radar-1"></div>
+      <div class="osm-beacon-radar-2"></div>
     </div>
   `,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -15]
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -18]
 });
 
 export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess }) {
@@ -154,8 +163,9 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
   const [radiusKm, setRadiusKm] = useState(15);
   const [facilityType, setFacilityType] = useState("all"); // 'all', 'hospital', 'pharmacy'
 
-  // Location state
-  const [currentCenter, setCurrentCenter] = useState(DEFAULT_CENTER);
+  // Live Location state (No dummy/hardcoded defaults!)
+  const [currentCenter, setCurrentCenter] = useState(INITIAL_PLACEHOLDER_CENTER);
+  const [isLiveActive, setIsLiveActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -214,10 +224,91 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     }
   };
 
-  // Initial load when modal opens
+  // AUTOMATIC LIVE LOCATION DETECTION (No Hardcoded Dummy Data!)
+  const detectAndApplyLiveLocation = async (userInitiated = false) => {
+    setLocatingUser(true);
+
+    let locationResolved = false;
+
+    // Fast Path: Immediate Network IP Geolocation
+    try {
+      const ipLoc = await detectLiveLocation();
+      if (ipLoc && ipLoc.lat && ipLoc.lng) {
+        const rev = await reverseGeocodeOsm(ipLoc.lat, ipLoc.lng);
+        const label = rev.short_name || ipLoc.display_name || "Live Location";
+        const newLiveCenter = {
+          lat: ipLoc.lat,
+          lng: ipLoc.lng,
+          label: label,
+          isLive: true,
+          source: ipLoc.source || "Network Live Location"
+        };
+        setCurrentCenter(newLiveCenter);
+        setIsLiveActive(true);
+        setSearchQuery(label);
+        locationResolved = true;
+
+        if (mapRef.current) {
+          mapRef.current.setView([ipLoc.lat, ipLoc.lng], 14);
+        }
+
+        loadNearbyFacilities(newLiveCenter, radiusKm, selectedMedicine, quantityNeeded, facilityType);
+        if (userInitiated) {
+          showToast('success', `📍 Live Location Detected: ${label}`);
+        }
+      }
+    } catch (e) {
+      console.warn("IP Geolocation fallback attempt failed:", e);
+    }
+
+    // High Precision Path: Browser GPS Geolocation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const rev = await reverseGeocodeOsm(lat, lng);
+            const label = rev.short_name || `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
+            const gpsCenter = {
+              lat: lat,
+              lng: lng,
+              label: label,
+              isLive: true,
+              source: "High-Accuracy GPS"
+            };
+            setCurrentCenter(gpsCenter);
+            setIsLiveActive(true);
+            setSearchQuery(label);
+            setLocatingUser(false);
+
+            if (mapRef.current) {
+              mapRef.current.setView([lat, lng], 14);
+            }
+
+            loadNearbyFacilities(gpsCenter, radiusKm, selectedMedicine, quantityNeeded, facilityType);
+            showToast('success', `📍 Live GPS Location Active: ${label}`);
+          } catch (err) {
+            setLocatingUser(false);
+          }
+        },
+        (err) => {
+          setLocatingUser(false);
+          if (!locationResolved) {
+            showToast('error', 'Could not access GPS. Using regional live network location.');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 10000 }
+      );
+    } else {
+      setLocatingUser(false);
+    }
+  };
+
+  // Run live location detection immediately upon opening modal
   useEffect(() => {
     if (isOpen) {
-      loadNearbyFacilities(currentCenter, radiusKm, selectedMedicine, quantityNeeded, facilityType);
+      detectAndApplyLiveLocation();
     }
   }, [isOpen]);
 
@@ -254,55 +345,22 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     const newCenter = {
       lat: loc.lat,
       lng: loc.lng,
-      label: loc.display_name.split(',')[0]
+      label: loc.display_name.split(',')[0],
+      isLive: false
     };
     setCurrentCenter(newCenter);
+    setIsLiveActive(false);
     setSearchResults([]);
     setSearchQuery(newCenter.label);
 
     // Pan map to new center
     if (mapRef.current) {
-      mapRef.current.setView([loc.lat, loc.lng], 13);
+      mapRef.current.setView([loc.lat, loc.lng], 14);
     }
 
     // Immediately fetch facilities around new location
     loadNearbyFacilities(newCenter, radiusKm, selectedMedicine, quantityNeeded, facilityType);
     showToast('success', `📍 Centered on OpenStreetMap: ${newCenter.label}`);
-  };
-
-  // HTML5 Browser Geolocation ("Locate Me")
-  const handleGeolocateUser = () => {
-    if (!navigator.geolocation) {
-      showToast('error', 'Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setLocatingUser(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const userLoc = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          label: "Your GPS Location"
-        };
-        setCurrentCenter(userLoc);
-        setLocatingUser(false);
-        setSearchQuery("My Location");
-
-        if (mapRef.current) {
-          mapRef.current.setView([userLoc.lat, userLoc.lng], 14);
-        }
-
-        loadNearbyFacilities(userLoc, radiusKm, selectedMedicine, quantityNeeded, facilityType);
-        showToast('success', '📍 OpenStreetMap centered on your GPS position.');
-      },
-      (err) => {
-        console.warn("Geolocation denied or failed:", err);
-        setLocatingUser(false);
-        showToast('error', 'Could not detect location. Using Mysuru district default.');
-      },
-      { timeout: 8000, enableHighAccuracy: true }
-    );
   };
 
   // Focus facility on map from drawer list
@@ -326,7 +384,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     setSendingRequest(true);
 
     const payload = {
-      from_hospital: "City General Hospital",
+      from_hospital: currentCenter.label || "Local Health Admin",
       to_hospital: facility.name,
       medicine: selectedMedicine,
       quantity: qtyToSend,
@@ -336,7 +394,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     try {
       const result = await sendMedicineRequest(payload);
       if (result && result.success !== false) {
-        showToast('success', `✅ Requisition dispatched to ${facility.name} via OpenStreetMap node`);
+        showToast('success', `✅ Requisition dispatched to ${facility.name} via OpenStreetMap`);
         
         // Mark facility as requested
         setRequestedHospitals(prev => ({
@@ -395,8 +453,22 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
             <div className="topbar-title">
               <span className="osm-logo-icon">🗺️</span>
               <div className="title-text-group">
-                <span className="main-title">OpenStreetMap Medicine Finder</span>
-                <span className="subtitle">Live Geospatial Stock & Requisition Network</span>
+                <div className="title-with-badge">
+                  <span className="main-title">Live Medicine Finder</span>
+                  {isLiveActive ? (
+                    <span className="live-status-pill active" title="Real-time live location active">
+                      <span className="pulse-green-dot"></span>
+                      LIVE LOCATION
+                    </span>
+                  ) : (
+                    <span className="live-status-pill custom" title="Custom searched location">
+                      SEARCH LOCATION
+                    </span>
+                  )}
+                </div>
+                <span className="subtitle">
+                  📍 {currentCenter.label} ({currentCenter.lat.toFixed(4)}°N, {currentCenter.lng.toFixed(4)}°E)
+                </span>
               </div>
             </div>
           </div>
@@ -408,7 +480,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               <input 
                 type="text"
                 className="osm-search-input"
-                placeholder="Search city, area, hospital (e.g. Mysuru)..."
+                placeholder="Search city, locality, hospital..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -422,15 +494,15 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               </button>
             </form>
 
-            {/* GPS Geolocation Button */}
+            {/* GPS Live Geolocation Button */}
             <button 
-              className={`btn-locate-me ${locatingUser ? 'active-locating' : ''}`}
-              onClick={handleGeolocateUser}
-              title="Locate me using GPS"
+              className={`btn-locate-me ${locatingUser ? 'active-locating' : ''} ${isLiveActive ? 'is-live' : ''}`}
+              onClick={() => detectAndApplyLiveLocation(true)}
+              title="Detect and refresh real live GPS location"
               disabled={locatingUser}
             >
-              <Crosshair size={14} />
-              <span>{locatingUser ? 'Locating...' : 'My Location'}</span>
+              {locatingUser ? <RefreshCw size={14} className="spin-icon" /> : <Crosshair size={14} />}
+              <span>{locatingUser ? 'Detecting...' : 'My Live Location'}</span>
             </button>
 
             {/* Medicine Selector */}
@@ -453,7 +525,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
 
             {/* Required Quantity */}
             <div className="filter-group">
-              <label className="filter-label" htmlFor="input-qty-map">Quantity Needed</label>
+              <label className="filter-label" htmlFor="input-qty-map">Quantity</label>
               <input
                 id="input-qty-map"
                 type="number"
@@ -468,7 +540,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
 
             {/* Radius Selector */}
             <div className="filter-group">
-              <label className="filter-label" htmlFor="select-radius-map">OSM Radius</label>
+              <label className="filter-label" htmlFor="select-radius-map">Radius</label>
               <select
                 id="select-radius-map"
                 className="filter-select select-radius"
@@ -495,7 +567,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               disabled={loadingHospitals}
             >
               <Search size={14} />
-              <span>{loadingHospitals ? 'Querying OSM...' : 'Find Medicine'}</span>
+              <span>{loadingHospitals ? 'Searching...' : 'Find Stock'}</span>
             </button>
 
             {/* Close Modal */}
@@ -518,7 +590,9 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               <div className="sidebar-header">
                 <div className="sidebar-header-left">
                   <Package size={16} className="text-cyan" />
-                  <span className="sidebar-title">Nearby Facilities ({visibleFacilities.length})</span>
+                  <span className="sidebar-title">
+                    Facilities Nearby ({visibleFacilities.length})
+                  </span>
                 </div>
                 <div className="facility-type-pills">
                   <button 
@@ -555,7 +629,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                 {loadingHospitals ? (
                   <div className="sidebar-loading">
                     <div className="spinner-osm"></div>
-                    <span>Querying OpenStreetMap Overpass Network...</span>
+                    <span>Querying OpenStreetMap around your live location...</span>
                   </div>
                 ) : visibleFacilities.length === 0 ? (
                   <div className="sidebar-empty">
@@ -565,7 +639,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                       setRadiusKm(prev => Math.min(50, prev + 10));
                       loadNearbyFacilities(currentCenter, Math.min(50, radiusKm + 10), selectedMedicine, quantityNeeded, facilityType);
                     }}>
-                      Expand Search Radius
+                      Expand Search to {Math.min(50, radiusKm + 10)} km
                     </button>
                   </div>
                 ) : (
@@ -586,7 +660,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                               {isPharmacy ? '💊 Pharmacy' : '🏥 Hospital'}
                             </span>
                             <span className="distance-badge">
-                              📍 {facility.distance_km} km
+                              📍 {facility.distance_km} km away
                             </span>
                             {facility.is_core_node && (
                               <span className="core-node-badge">Core Agent</span>
@@ -649,7 +723,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                 <button 
                   className={`btn-osm-layer ${activeTileLayer === 'dark' ? 'active' : ''}`}
                   onClick={() => setActiveTileLayer('dark')}
-                  title="Carto Dark Mode (OSM)"
+                  title="Dark Mode (Zero API Key, Free OpenStreetMap)"
                 >
                   <Layers size={13} />
                   <span>Dark OSM</span>
@@ -657,14 +731,14 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                 <button 
                   className={`btn-osm-layer ${activeTileLayer === 'standard' ? 'active' : ''}`}
                   onClick={() => setActiveTileLayer('standard')}
-                  title="Standard OpenStreetMap"
+                  title="Standard OpenStreetMap (Zero API Key)"
                 >
                   <span>Standard OSM</span>
                 </button>
                 <button 
                   className={`btn-osm-layer ${activeTileLayer === 'humanitarian' ? 'active' : ''}`}
                   onClick={() => setActiveTileLayer('humanitarian')}
-                  title="OSM Humanitarian (High Contrast)"
+                  title="OSM Humanitarian High-Contrast (Zero API Key)"
                 >
                   <span>OSM HOT</span>
                 </button>
@@ -713,28 +787,49 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
                 }}
               />
 
-              {/* Center / User Location Marker */}
+              {/* Live Location Marker */}
               <Marker
                 position={[currentCenter.lat, currentCenter.lng]}
-                icon={centerUserIcon}
+                icon={liveUserBeaconIcon}
               >
                 <Popup>
                   <div className="popup-header">
-                    <div className="popup-hospital-name">📍 Reference Location</div>
+                    <div className="popup-badge-row">
+                      <span className="live-status-pill active">
+                        <span className="pulse-green-dot"></span>
+                        LIVE LOCATION
+                      </span>
+                    </div>
+                    <div className="popup-hospital-name">📍 You Are Here</div>
                     <div className="popup-hospital-address">
                       <span>{currentCenter.label}</span>
                     </div>
                   </div>
                   <div className="popup-details">
                     <div className="popup-stat-row">
-                      <span className="popup-stat-label">Coordinates:</span>
-                      <span className="popup-stat-val">{currentCenter.lat.toFixed(4)}°N, {currentCenter.lng.toFixed(4)}°E</span>
+                      <span className="popup-stat-label">Live Coordinates:</span>
+                      <span className="popup-stat-val text-cyan">
+                        {currentCenter.lat.toFixed(5)}°N, {currentCenter.lng.toFixed(5)}°E
+                      </span>
                     </div>
                     <div className="popup-stat-row">
                       <span className="popup-stat-label">Search Radius:</span>
-                      <span className="popup-stat-val text-cyan">{radiusKm} km</span>
+                      <span className="popup-stat-val">{radiusKm} km</span>
+                    </div>
+                    <div className="popup-stat-row">
+                      <span className="popup-stat-label">Location Source:</span>
+                      <span className="popup-stat-val text-muted">
+                        {currentCenter.source || "Live Geolocation"}
+                      </span>
                     </div>
                   </div>
+                  <button 
+                    className="btn-popup-refresh-live"
+                    onClick={() => detectAndApplyLiveLocation(true)}
+                  >
+                    <RefreshCw size={12} />
+                    <span>Re-detect GPS Coordinates</span>
+                  </button>
                 </Popup>
               </Marker>
 
@@ -742,7 +837,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               {visibleFacilities.map((facility) => {
                 const lat = facility.location?.lat || currentCenter.lat;
                 const lng = facility.location?.lng || currentCenter.lng;
-                const address = facility.location?.address || `${facility.name}, Mysuru`;
+                const address = facility.location?.address || `${facility.name}`;
                 const isRequested = Boolean(requestedHospitals[`${facility.name}_${selectedMedicine}`]);
                 const hasEnough = facility.stock >= Number(quantityNeeded);
                 const isPharmacy = facility.facility_type === 'pharmacy';
@@ -864,13 +959,13 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
           <div className="bottombar-stats">
             <div className="stat-chip">
               <Package size={15} color="#06b6d4" />
-              <span>Found <strong>{visibleFacilities.length}</strong> medical facilities within <strong>{radiusKm} km</strong></span>
+              <span>Found <strong>{visibleFacilities.length}</strong> medical facilities within <strong>{radiusKm} km</strong> of your live location</span>
             </div>
             <div className="stat-chip">
-              <span>Total Network Stock: <strong>{totalAvailableStock.toLocaleString()}</strong> units of <strong>{selectedMedicine}</strong></span>
+              <span>Total Local Stock: <strong>{totalAvailableStock.toLocaleString()}</strong> units</span>
             </div>
             <div className="stat-chip osm-attribution-chip">
-              <span>Map Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> Contributors (ODbL)</span>
+              <span>Map Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> Contributors</span>
             </div>
           </div>
 

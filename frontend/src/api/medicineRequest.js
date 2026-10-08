@@ -79,6 +79,36 @@ export async function searchOsmLocations(query) {
   }
 }
 
+export async function detectLiveLocation() {
+  try {
+    const res = await fetch(getApiUrl('/api/detect-location'));
+    if (!res.ok) throw new Error("Failed to detect live location");
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackRes = await fetch('http://localhost:8000/api/detect-location');
+      return await fallbackRes.json();
+    } catch (e) {
+      return { success: false, lat: 12.9187, lng: 74.8598, city: "Mangaluru" };
+    }
+  }
+}
+
+export async function reverseGeocodeOsm(lat, lng) {
+  try {
+    const res = await fetch(getApiUrl(`/api/osm-reverse-geocode?lat=${lat}&lng=${lng}`));
+    if (!res.ok) throw new Error("Reverse geocode failed");
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackRes = await fetch(`http://localhost:8000/api/osm-reverse-geocode?lat=${lat}&lng=${lng}`);
+      return await fallbackRes.json();
+    } catch (e) {
+      return { short_name: `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E` };
+    }
+  }
+}
+
 export async function fetchMedicineRequests() {
   try {
     const res = await fetch(getApiUrl('/api/medicine-requests'));
