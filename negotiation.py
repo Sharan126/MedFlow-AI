@@ -200,12 +200,21 @@ def run_negotiation(agents: list[HospitalAgent], max_rounds: int = 2) -> dict:
 
     # Determine counter-medicines (what receiver gives back)
     counter_medicines = {}
+    raw_counter = {}
 
-    if chosen_response["counter_offer"]:
-        counter_medicines = chosen_response["counter_offer"]
-    elif request_data["offers"]:
+    if chosen_response.get("counter_offer") and isinstance(chosen_response["counter_offer"], dict):
+        raw_counter = chosen_response["counter_offer"]
+    elif request_data.get("offers") and isinstance(request_data["offers"], dict):
         # Use original offers from requester
-        counter_medicines = request_data["offers"]
+        raw_counter = request_data["offers"]
+
+    # Clamp counter offers strictly to receiver's safe surplus to guarantee safety constraints
+    for med, qty in raw_counter.items():
+        if isinstance(qty, (int, float)) and qty > 0:
+            available_surplus = receiver.compute_surplus(med)
+            safe_qty = min(int(qty), available_surplus)
+            if safe_qty > 0:
+                counter_medicines[med] = safe_qty
 
     # === SIMULATE TRADE FOR EXPLANATION ===
     # (Don't actually mutate inventories - that's for human approval)
@@ -299,6 +308,8 @@ def execute_trade(pending_trade: dict, agents: list[HospitalAgent]) -> dict:
 
     # Validate trade safety BEFORE executing
     for medicine, qty in pending_trade["medicines"].items():
+        if qty <= 0:
+            continue
         if not donor.can_safely_transfer(medicine, qty):
             raise ValueError(
                 f"SAFETY VIOLATION: {donor.name} cannot transfer {qty} {medicine} "
@@ -306,6 +317,8 @@ def execute_trade(pending_trade: dict, agents: list[HospitalAgent]) -> dict:
             )
 
     for medicine, qty in pending_trade["counter_medicines"].items():
+        if qty <= 0:
+            continue
         if not receiver.can_safely_transfer(medicine, qty):
             raise ValueError(
                 f"SAFETY VIOLATION: {receiver.name} cannot transfer {qty} {medicine} "

@@ -12,36 +12,36 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-# === GEMINI API CONFIGURATION ===
+# === PROVIDER & API KEY CONFIGURATION ===
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GROK_API_KEY = os.getenv('GROK_API_KEY') or os.getenv('XAI_API_KEY')
 
-if not GEMINI_API_KEY:
-    error_msg = """
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║  ❌ GEMINI_API_KEY NOT FOUND                                  ║
-    ╠═══════════════════════════════════════════════════════════════╣
-    ║  MedFlow-AI requires a valid Gemini API key to operate.      ║
-    ║                                                                ║
-    ║  Setup Instructions:                                           ║
-    ║  1. Copy .env.example to .env                                  ║
-    ║  2. Get your API key from:                                     ║
-    ║     https://aistudio.google.com/app/apikey                     ║
-    ║  3. Add to .env: GEMINI_API_KEY=your_key_here                 ║
-    ║                                                                ║
-    ║  Current .env path: {env_path}
-    ╚═══════════════════════════════════════════════════════════════╝
-    """.format(env_path=env_path.absolute())
+# Auto-detect or use explicit provider
+configured_provider = os.getenv('LLM_PROVIDER', '').lower()
+if configured_provider == 'grok' or (GROK_API_KEY and not GEMINI_API_KEY):
+    LLM_PROVIDER = 'grok'
+    MODEL_NAME = os.getenv('GROK_MODEL', os.getenv('MODEL_NAME', 'grok-2-latest'))
+else:
+    LLM_PROVIDER = 'gemini'
+    MODEL_NAME = os.getenv('MODEL_NAME', 'gemini-3.5-flash-lite')
 
-    print(error_msg, file=sys.stderr)
-    sys.exit(1)
-
-# Validate API key format (basic sanity check)
-if len(GEMINI_API_KEY) < 20:
-    print(f"⚠️  WARNING: API key seems unusually short ({len(GEMINI_API_KEY)} chars). Please verify.", file=sys.stderr)
-
-# === MODEL CONFIGURATION ===
-# Using gemini-2.0-flash for speed and cost-efficiency in multi-agent scenarios
-MODEL_NAME = os.getenv('MODEL_NAME', 'gemini-2.0-flash-exp')
+# Validate that at least one key is present
+if LLM_PROVIDER == 'grok':
+    if not GROK_API_KEY or GROK_API_KEY == 'your_grok_api_key_here':
+        raise ValueError(
+            f"GROK_API_KEY is missing in {env_path.absolute()}. "
+            "Please provide a valid xAI Grok API key from https://console.x.ai"
+        )
+else:
+    if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
+        if not GROK_API_KEY:
+            raise ValueError(
+                f"GEMINI_API_KEY (or GROK_API_KEY) is missing in {env_path.absolute()}. "
+                "Please provide a valid API key in your .env file."
+            )
+        else:
+            LLM_PROVIDER = 'grok'
+            MODEL_NAME = os.getenv('GROK_MODEL', 'grok-2-latest')
 
 # === RETRY CONFIGURATION ===
 MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
