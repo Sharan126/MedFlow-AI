@@ -105,9 +105,15 @@ def format_hospitals_data():
 
 # === API ENDPOINTS ===
 
+frontend_dist = Path(__file__).parent / "frontend" / "dist"
+
 @app.get("/")
 def root():
-    """Basic API landing endpoint."""
+    """Serves the built React application if available, else API health info."""
+    index_file = frontend_dist / "index.html"
+    if index_file.is_file():
+        from fastapi.responses import FileResponse
+        return FileResponse(index_file)
     return {
         "status": "online",
         "service": "MedFlow-AI",
