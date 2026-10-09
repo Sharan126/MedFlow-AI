@@ -93,7 +93,7 @@ with st.sidebar:
     st.markdown("---")
 
     # Generate New Scenario
-    if st.button("🔄 Generate New Scenario", use_container_width=True):
+    if st.button("🔄 Generate New Scenario", width="stretch"):
         # Generate new random hospitals
         st.session_state.hospitals = generate_hospitals()
         st.session_state.events = []
@@ -111,7 +111,7 @@ with st.sidebar:
     if st.button(
         "🚀 Start Negotiation",
         disabled=negotiation_disabled,
-        use_container_width=True,
+        width="stretch",
         type="primary"
     ):
         with st.spinner("🤖 AI agents are negotiating..."):
@@ -245,7 +245,7 @@ for idx, agent in enumerate(st.session_state.hospitals):
         st.dataframe(
             inventory_data,
             hide_index=True,
-            use_container_width=True
+            width="stretch"
         )
 
         # Surplus badge
@@ -347,7 +347,7 @@ if st.session_state.pending_trade:
     col1, col2, col3 = st.columns([1, 1, 2])
 
     with col1:
-        if st.button("✅ APPROVE TRADE", type="primary", use_container_width=True):
+        if st.button("✅ APPROVE TRADE", type="primary", width="stretch"):
             try:
                 # Execute the trade
                 execution_report = execute_trade(
@@ -391,9 +391,9 @@ if st.session_state.pending_trade:
                 st.error(f"❌ Trade execution failed: {str(e)}")
 
     with col2:
-        if st.button("❌ REJECT TRADE", use_container_width=True):
+        if st.button("❌ REJECT TRADE", width="stretch"):
             # Record rejection in trade history
-            rejection_record = reject_trade(st.session_state.pending_trade)
+            rejection_record = reject_trade(trade)
 
             trade_record = {
                 "trade_id": len(st.session_state.trade_history) + 1,

@@ -15,9 +15,10 @@ if str(ROOT_DIR) not in sys.path:
 from server import app
 
 if __name__ == "__main__":
-    if hasattr(sys.stdout, "reconfigure"):
+    reconf = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconf):
         try:
-            sys.stdout.reconfigure(encoding="utf-8")
+            reconf(encoding="utf-8")
         except Exception:
             pass
     print("[*] Starting MedFlow-AI Server on http://127.0.0.1:8000")

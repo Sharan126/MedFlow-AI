@@ -4,8 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
   Search, X, Send, MapPin, CheckCircle, AlertCircle, Package, 
-  ArrowUpRight, Crosshair, Navigation, Layers, List, ExternalLink, Pill,
-  Radio, RefreshCw
+  Crosshair, Navigation, Layers, List, ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { 
   sendMedicineRequest, 
@@ -24,10 +24,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// Dakshina Kannada Healthcare Corridor Coordinates (Mangaluru Central)
+const DEFAULT_CENTER = {
+  lat: 12.864892,
+  lng: 74.835974,
+  label: "Wenlock District Hospital (Mangaluru Central)",
+  isLive: false
+};
+
 // Initial placeholder before live coordinates settle
 const INITIAL_PLACEHOLDER_CENTER = {
-  lat: 12.9187,
-  lng: 74.8598,
+  lat: 12.864892,
+  lng: 74.835974,
   label: "Detecting Live Location...",
   isLive: false
 };
@@ -295,7 +303,9 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
         (err) => {
           setLocatingUser(false);
           if (!locationResolved) {
-            showToast('error', 'Could not access GPS. Using regional live network location.');
+            setCurrentCenter(DEFAULT_CENTER);
+            loadNearbyFacilities(DEFAULT_CENTER, radiusKm, selectedMedicine, quantityNeeded, facilityType);
+            showToast('error', 'Could not access GPS. Using Dakshina Kannada central corridor.');
           }
         },
         { enableHighAccuracy: true, timeout: 7000, maximumAge: 10000 }
@@ -384,7 +394,9 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
     setSendingRequest(true);
 
     const payload = {
-      from_hospital: currentCenter.label || "Local Health Admin",
+      from_hospital: currentCenter.label && !currentCenter.label.includes("Detecting")
+        ? currentCenter.label
+        : "Wenlock District Hospital",
       to_hospital: facility.name,
       medicine: selectedMedicine,
       quantity: qtyToSend,
@@ -480,7 +492,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               <input 
                 type="text"
                 className="osm-search-input"
-                placeholder="Search city, locality, hospital..."
+                placeholder="Search city, area, hospital (e.g. Mangaluru, Bantwal)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -837,7 +849,7 @@ export default function FindMedicineModal({ isOpen, onClose, onRequestSuccess })
               {visibleFacilities.map((facility) => {
                 const lat = facility.location?.lat || currentCenter.lat;
                 const lng = facility.location?.lng || currentCenter.lng;
-                const address = facility.location?.address || `${facility.name}`;
+                const address = facility.location?.address || `${facility.name}, Dakshina Kannada`;
                 const isRequested = Boolean(requestedHospitals[`${facility.name}_${selectedMedicine}`]);
                 const hasEnough = facility.stock >= Number(quantityNeeded);
                 const isPharmacy = facility.facility_type === 'pharmacy';

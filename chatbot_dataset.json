@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "shortage-risk",
+      "match_phrases": [
+        "highest shortage risk",
+        "most at risk hospital",
+        "hospital at highest risk",
+        "most critical shortages",
+        "which hospital is most critical",
+        "highest risk",
+        "most shortage risk",
+        "most shortages",
+        "most critical",
+        "worst shortage"
+      ],
+      "examples": [
+        "Which hospital has the highest shortage risk?",
+        "Which hospital has the most critical shortages?"
+      ],
+      "guidance": "Compare hospitals using status_counts from the current hospital data. Rank by critical count first, then warning count. If the compared counts are equal, say the data shows a tie. Name the counts used."
+    },
+    {
+      "id": "hospital-inventory",
+      "match_phrases": [
+        "hospital inventory",
+        "inventory at",
+        "stock at",
+        "stock levels",
+        "how much stock",
+        "how much",
+        "how much of",
+        "how many",
+        "how many units of",
+        "what is the stock",
+        "current stock of",
+        "quantity of",
+        "medicine stock",
+        "inventory of",
+        "medicine threshold",
+        "threshold at",
+        "below threshold",
+        "above threshold",
+        "how much medicine",
+        "how many medicines",
+        "stock level"
+      ],
+      "examples": [
+        "How much Amoxicillin does City General Hospital have?",
+        "What is the stock compared with the threshold?"
+      ],
+      "guidance": "Use the named hospital's inventory and thresholds. State only values present in the current data. Do not infer clinical meaning or make recommendations."
+    },
+    {
+      "id": "latest-approved-trade",
+      "match_phrases": [
+        "last trade approved",
+        "latest approved trade",
+        "most recent approved trade",
+        "last approved trade",
+        "what trade was approved",
+        "last approved",
+        "latest trade",
+        "most recent trade",
+        "recently approved trade"
+      ],
+      "examples": [
+        "What was the last trade approved?",
+        "Which hospitals were involved in the latest approved trade?"
+      ],
+      "guidance": "Search current trade_history for records whose status is APPROVED. Return the most recent matching record based on its timestamp; if timestamps are equal or unavailable, use the later record in the list. If no approved record exists, use the required not-in-dataset response."
+    },
+    {
+      "id": "reallocated-units",
+      "match_phrases": [
+        "units reallocated",
+        "units have been reallocated",
+        "total units transferred",
+        "total transferred units",
+        "how many units transferred",
+        "how many units moved",
+        "units moved",
+        "total reallocated",
+        "transferred in approved trades",
+        "reallocation total"
+      ],
+      "examples": [
+        "How many units have been reallocated?",
+        "What is the total number of units transferred in approved trades?"
+      ],
+      "guidance": "Sum the quantities in medicines for APPROVED trade_history records only. Do not include rejected or pending trades, and do not count counter_medicines as transferred units."
+    },
+    {
+      "id": "pending-trade",
+      "match_phrases": [
+        "pending trade",
+        "trade pending",
+        "waiting for approval",
+        "trade awaiting approval",
+        "proposed trade",
+        "awaiting human approval",
+        "awaiting approval",
+        "current proposal"
+      ],
+      "examples": [
+        "Is there a trade waiting for approval?",
+        "What medicines are in the pending trade?"
+      ],
+      "guidance": "Use only Current Pending Trade. If it is null, state that there is no pending trade in the current data. Never approve, reject, or change the trade."
+    },
+    {
+      "id": "trade-explanation",
+      "match_phrases": [
+        "why was the trade",
+        "why did the trade",
+        "why was this trade",
+        "reason for the trade",
+        "trade explanation",
+        "why was it approved",
+        "why was this approved",
+        "reason was this trade",
+        "explain this trade"
+      ],
+      "examples": [
+        "Why did the trade happen?",
+        "What explanation was recorded for the approved trade?"
+      ],
+      "guidance": "Use the matching trade record's explanation and any relevant inventory or threshold values present in the current data. Do not invent a reason when no explanation was recorded."
+    },
+    {
+      "id": "shortage-details",
+      "match_phrases": [
+        "which medicines are in shortage",
+        "what medicines are in shortage",
+        "list shortages",
+        "shortage details",
+        "medicines below threshold",
+        "which medicines need replenishment",
+        "hospital shortage list"
+      ],
+      "examples": [
+        "Which medicines are in shortage at District Government Hospital?",
+        "List the current shortages."
+      ],
+      "guidance": "Use the current hospital shortages arrays and their medicine, severity, deficit, and percentage fields. Identify the hospital when one is named. Do not describe a medicine absent from the current shortage data as a shortage."
+    },
+    {
+      "id": "surplus-details",
+      "match_phrases": [
+        "which medicines are surplus",
+        "what medicines are surplus",
+        "list surpluses",
+        "available surplus",
+        "has surplus of",
+        "surplus inventory",
+        "which hospital has extra"
+      ],
+      "examples": [
+        "Which hospital has a surplus of Insulin?",
+        "What surplus medicines are currently available?"
+      ],
+      "guidance": "Use only the current hospital surpluses data. Name the hospital, medicine, and quantity only where recorded. A surplus is not a completed transfer."
+    },
+    {
+      "id": "trade-status-counts",
+      "match_phrases": [
+        "how many trades approved",
+        "number of approved trades",
+        "how many trades rejected",
+        "number of rejected trades",
+        "trade approval count",
+        "trade rejection count",
+        "approval statistics"
+      ],
+      "examples": [
+        "How many trades were approved?",
+        "How many trades were rejected?"
+      ],
+      "guidance": "Count records in Current Trade History by their status exactly as recorded. Do not count a pending trade as approved or rejected."
+    },
+    {
+      "id": "trade-details",
+      "match_phrases": [
+        "who gave medicine",
+        "who donated",
+        "who received",
+        "trade donor",
+        "trade receiver",
+        "medicine transferred in trade",
+        "how many units in the trade",
+        "which medicine was transferred"
+      ],
+      "examples": [
+        "Who donated medicine in the last approved trade?",
+        "Which medicine and quantity were transferred?"
+      ],
+      "guidance": "Use donor, receiver, medicines, timestamp, and status from the specific matching trade record. Do not infer a trade from current inventory alone."
+    },
+    {
+      "id": "hospital-and-medicine-list",
+      "match_phrases": [
+        "how many hospitals",
+        "number of hospitals",
+        "list hospitals",
+        "hospital names",
+        "which hospitals are in the network",
+        "how many medicines tracked",
+        "list medicines",
+        "medicine names"
+      ],
+      "examples": [
+        "How many hospitals are in the current network?",
+        "Which medicines are tracked?"
+      ],
+      "guidance": "Count hospitals from Current Hospital Inventories. List medicine names from inventory keys. Do not rely on a remembered or fixed hospital or medicine count."
+    },
+    {
+      "id": "network-shortage-summary",
+      "match_phrases": [
+        "how many critical shortages",
+        "critical shortage count",
+        "how many warnings",
+        "warning shortage count",
+        "network shortage summary",
+        "total critical deficits",
+        "overall shortage status"
+      ],
+      "examples": [
+        "How many critical shortages are there across the network?",
+        "How many warnings are there?"
+      ],
+      "guidance": "Sum the matching critical or warning counts from each hospital's status_counts in Current Hospital Inventories. State which status count was summed. Do not treat the sum as a count of distinct hospitals."
+    },
+    {
+      "id": "medicine-network-comparison",
+      "match_phrases": [
+        "compare stock",
+        "compare inventory",
+        "which hospital has the most",
+        "which hospital has the least",
+        "most stock of",
+        "least stock of",
+        "highest stock of",
+        "lowest stock of",
+        "across hospitals"
+      ],
+      "examples": [
+        "Which hospital has the most Amoxicillin?",
+        "Compare Ibuprofen stock across hospitals."
+      ],
+      "guidance": "Compare the named medicine's inventory quantity across the hospitals in Current Hospital Inventories. Report the values and hospital names used. If the medicine is not recorded for a hospital, do not assume its quantity."
+    }
+  ]
+}

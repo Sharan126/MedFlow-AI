@@ -21,6 +21,7 @@ MedFlow-AI is an autonomous medical supply chain system where **hospital AI agen
 - ✅ **Human-in-the-Loop** - All trades require administrator approval
 - ✅ **Full Transparency** - Complete audit trail of every AI decision
 - ✅ **Safety First** - No hospital drops below safety thresholds
+- ✅ **Supply Chain Assistant** - Read-only chat grounded in current hospital inventories and trade records
 - ✅ **Zero Fallbacks** - If Gemini fails, the system fails loudly (no fake responses)
 
 ---
@@ -120,6 +121,9 @@ Review the proposed trade:
 | **agents.py** | Hospital agent class with LLM-powered negotiation |
 | **data.py** | Scenario generator with guaranteed shortages |
 | **negotiation.py** | Multi-round negotiation orchestrator |
+| **chatbot.py** | Read-only assistant grounded in the current supply chain data |
+| **chatbot_dataset.json** | Curated FAQ examples and answer guidance retrieved for relevant questions; live state remains the only source of facts |
+| **server.py** | FastAPI backend for the React frontend, including `/api/chat` |
 | **app.py** | Streamlit dashboard UI |
 
 ---

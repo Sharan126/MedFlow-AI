@@ -6,14 +6,15 @@ import PendingTradePanel from './components/PendingTradePanel';
 import TradeHistoryTable from './components/TradeHistoryTable';
 import ReasoningDrawer from './components/ReasoningDrawer';
 import ApiKeyModal from './components/ApiKeyModal';
-import FindMedicineButton from './components/FindMedicineButton';
+import DakshinaKannadaModal from './components/DakshinaKannadaModal';
+import SupplyChainChatbot from './components/SupplyChainChatbot';
 import FindMedicineModal from './components/FindMedicineModal';
 import DemandForecastModal from './components/DemandForecastModal';
 import RiskEngineModal from './components/RiskEngineModal';
 import ExpiryIntelligenceModal from './components/ExpiryIntelligenceModal';
 import RedistributionModal from './components/RedistributionModal';
 import PriorityEngineModal from './components/PriorityEngineModal';
-import { Play, Sparkles, Brain, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Play, Sparkles, Brain, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Building2, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [status, setStatus] = useState(null);
@@ -24,6 +25,13 @@ export default function App() {
   const [tradeHistory, setTradeHistory] = useState({ trades: [], stats: { approved: 0, rejected: 0, total_transferred: 0 } });
   const [reasoningData, setReasoningData] = useState({ logs: [], stats: {} });
   const [medicineRequests, setMedicineRequests] = useState([]);
+
+  // Dakshina Kannada regional state
+  const [directory, setDirectory] = useState([]);
+  const [taluks, setTaluks] = useState([]);
+  const [selectedTaluk, setSelectedTaluk] = useState('All');
+  const [nodeCount, setNodeCount] = useState(3);
+  const [showDirectoryModal, setShowDirectoryModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isNegotiating, setIsNegotiating] = useState(false);
@@ -38,16 +46,32 @@ export default function App() {
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [forecastTarget, setForecastTarget] = useState({ hospital: "City General Hospital", medicine: "Paracetamol" });
   const [errorBanner, setErrorBanner] = useState(null);
+  const [isDark, setIsDark] = useState(true);
 
-  // Fetch initial system state and medicine requests
+  // Sync theme attribute to HTML tag
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+  };
+
+  // Fetch initial system state including Dakshina Kannada network directory and medicine requests
   const fetchAllData = async () => {
     try {
-      const [statusRes, hospRes, eventsRes, historyRes, reasoningRes, requestsRes] = await Promise.all([
+      const [statusRes, hospRes, eventsRes, historyRes, reasoningRes, dirRes, taluksRes, requestsRes] = await Promise.all([
         fetch('/api/status').then(r => r.json()),
         fetch('/api/hospitals').then(r => r.json()),
         fetch('/api/events').then(r => r.json()),
         fetch('/api/history').then(r => r.json()),
         fetch('/api/reasoning').then(r => r.json()),
+        fetch('/api/dakshina-kannada/directory').then(r => r.json()).catch(() => ({ hospitals: [] })),
+        fetch('/api/dakshina-kannada/taluks').then(r => r.json()).catch(() => ({ taluks: [] })),
         fetch('/api/medicine-requests').then(r => r.json()).catch(() => ({ requests: [] }))
       ]);
 
@@ -58,6 +82,9 @@ export default function App() {
       setPendingTrade(eventsRes.pending_trade);
       setTradeHistory(historyRes);
       setReasoningData(reasoningRes);
+      setDirectory(dirRes.hospitals || []);
+      setTaluks(taluksRes.taluks || []);
+      if (hospRes.active_taluk) setSelectedTaluk(hospRes.active_taluk);
       setMedicineRequests(requestsRes.requests || []);
     } catch (err) {
       console.error("Failed to connect to MedFlow-AI backend:", err);
@@ -77,12 +104,20 @@ export default function App() {
     fetchAllData();
   }, []);
 
-  // Handler: Generate New Scenario
-  const handleNewScenario = async () => {
+  // Handler: Generate New Scenario within Dakshina Kannada
+  const handleNewScenario = async (taluk = selectedTaluk, count = nodeCount, hospitalNames = null) => {
     setLoading(true);
     setErrorBanner(null);
     try {
-      const res = await fetch('/api/scenario/new', { method: 'POST' });
+      const res = await fetch('/api/scenario/new', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          taluk: taluk === 'All' ? null : taluk, 
+          count: count,
+          hospital_names: hospitalNames 
+        })
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to generate scenario');
 
@@ -90,11 +125,18 @@ export default function App() {
       setScenarioCount(data.scenario_count);
       setEvents(data.events || []);
       setPendingTrade(data.pending_trade);
+      if (taluk) setSelectedTaluk(taluk);
     } catch (err) {
       setErrorBanner(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Select hospital from the Dakshina Kannada directory modal
+  const handleSelectHospitalFromDirectory = (hosp) => {
+    setShowDirectoryModal(false);
+    handleNewScenario(hosp.taluk, 3, [hosp.name]);
   };
 
   // Handler: Start AI Negotiation
@@ -123,11 +165,11 @@ export default function App() {
       setReasoningData(reasoningRes);
       setStatus(statusRes);
 
-      // Smoothly scroll to the verification panel for human verification
+      // Smooth scroll to pending trade panel if trade proposed
       if (data.pending_trade) {
         setTimeout(() => {
           document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' });
-        }, 250);
+        }, 150);
       }
     } catch (err) {
       setErrorBanner(err.message);
@@ -136,7 +178,7 @@ export default function App() {
     }
   };
 
-  // Handler: Approve Trade
+  // Handler: Human-in-the-Loop Trade Approval
   const handleApproveTrade = async () => {
     setProcessingTrade(true);
     setErrorBanner(null);
@@ -150,12 +192,14 @@ export default function App() {
       setPendingTrade(null);
 
       // Refresh trade history and reasoning
-      const [histRes, reasoningRes] = await Promise.all([
+      const [historyRes, reasoningRes, statusRes] = await Promise.all([
         fetch('/api/history').then(r => r.json()),
-        fetch('/api/reasoning').then(r => r.json())
+        fetch('/api/reasoning').then(r => r.json()),
+        fetch('/api/status').then(r => r.json())
       ]);
-      setTradeHistory(histRes);
+      setTradeHistory(historyRes);
       setReasoningData(reasoningRes);
+      setStatus(statusRes);
     } catch (err) {
       setErrorBanner(err.message);
     } finally {
@@ -163,21 +207,33 @@ export default function App() {
     }
   };
 
-  // Handler: Reject Trade
-  const handleRejectTrade = async () => {
+  // Handler: Human-in-the-Loop Trade Rejection
+  const handleRejectTrade = async (reason) => {
+    const reasonText = (typeof reason === 'string' && reason.trim())
+      ? reason.trim()
+      : 'Declined by medical administrator';
     setProcessingTrade(true);
     setErrorBanner(null);
     try {
-      const res = await fetch('/api/trade/reject', { method: 'POST' });
+      const res = await fetch('/api/trade/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reasonText })
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to reject trade');
 
       setEvents(data.events || []);
       setPendingTrade(null);
 
-      // Refresh trade history
-      const histRes = await fetch('/api/history').then(r => r.json());
-      setTradeHistory(histRes);
+      const [historyRes, reasoningRes, statusRes] = await Promise.all([
+        fetch('/api/history').then(r => r.json()),
+        fetch('/api/reasoning').then(r => r.json()),
+        fetch('/api/status').then(r => r.json())
+      ]);
+      setTradeHistory(historyRes);
+      setReasoningData(reasoningRes);
+      setStatus(statusRes);
     } catch (err) {
       setErrorBanner(err.message);
     } finally {
@@ -186,39 +242,44 @@ export default function App() {
   };
 
   // Handler: Save API Key
-  const handleSaveKey = async (newKey) => {
-    const res = await fetch('/api/save-key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: newKey })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Failed to save key');
+  const handleSaveKey = async (apiKey) => {
+    try {
+      const res = await fetch('/api/save-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: apiKey })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to connect key');
 
-    // Refresh status
-    const statusRes = await fetch('/api/status').then(r => r.json());
-    setStatus(statusRes);
-    setErrorBanner(null);
+      setShowKeyModal(false);
+      fetchAllData();
+    } catch (err) {
+      throw err;
+    }
   };
 
-  // Handler: Clear Reasoning Log
+  // Handler: Clear Reasoning Logs
   const handleClearReasoning = async () => {
-    await fetch('/api/reasoning/clear', { method: 'POST' });
-    const reasoningRes = await fetch('/api/reasoning').then(r => r.json());
-    setReasoningData(reasoningRes);
+    try {
+      await fetch('/api/reasoning/clear', { method: 'POST' });
+      setReasoningData({ logs: [], stats: {} });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  // Compute crisis metrics for summary bar
+  // Calculate totals
   const totalCritical = hospitals.reduce((acc, h) => acc + (h.status_counts?.critical || 0), 0);
   const totalWarning = hospitals.reduce((acc, h) => acc + (h.status_counts?.warning || 0), 0);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Navigation */}
+    <div className="dashboard-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Clinical Navigation */}
       <Navbar 
         status={status}
         scenarioCount={scenarioCount}
-        onNewScenario={handleNewScenario}
+        onNewScenario={() => handleNewScenario(selectedTaluk, nodeCount)}
         onOpenKeyModal={() => setShowKeyModal(true)}
         onOpenFindMedicine={() => setShowFindMedicineModal(true)}
         onOpenForecast={() => setShowForecastModal(true)}
@@ -227,20 +288,21 @@ export default function App() {
         onOpenRedistribution={() => setShowRedistributionModal(true)}
         onOpenPriority={() => setShowPriorityModal(true)}
         loading={loading}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
       />
 
-      {/* Main Container */}
-      <main style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      {/* Main Operations Container */}
+      <main className="dashboard-main" style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '0 1.5rem 3rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         
-        {/* Error Alert Banner */}
         {/* Error Alert Banner with Emergency Map Fallback Trigger */}
         {errorBanner && (
           <div style={{
             padding: '1.15rem 1.5rem',
             borderRadius: 'var(--radius-md)',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.45)',
-            color: '#fca5a5',
+            background: 'var(--rose-50)',
+            border: '1px solid var(--rose-100)',
+            color: 'var(--rose-700)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -249,13 +311,13 @@ export default function App() {
             animation: 'fadeIn 0.2s ease'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <AlertTriangle size={22} color="#ef4444" />
+              <AlertTriangle size={22} color="var(--rose-600, #ef4444)" />
               <div>
-                <div style={{ fontWeight: '700', fontSize: '0.92rem', color: '#fca5a5' }}>
-                  AI Negotiation / Server Interruption
+                <div style={{ fontWeight: '700', fontSize: '0.92rem' }}>
+                  AI Negotiation / System Notice
                 </div>
-                <div style={{ fontSize: '0.82rem', color: '#fecaca', marginTop: '0.15rem' }}>
-                  {errorBanner}. Manual Emergency Override activated: use the Interactive Map to filter stock and request medicines.
+                <div style={{ fontSize: '0.82rem', marginTop: '0.15rem', opacity: 0.9 }}>
+                  {errorBanner}. Manual Override Available: Use the Interactive Emergency Map to dispatch medication requisitions directly.
                 </div>
               </div>
             </div>
@@ -272,7 +334,7 @@ export default function App() {
               </button>
               <button 
                 onClick={() => setErrorBanner(null)}
-                style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem' }}
+                style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem' }}
               >
                 ✕
               </button>
@@ -281,7 +343,7 @@ export default function App() {
         )}
 
         {/* Global Control & Telemetry Bar */}
-        <section className="glass-card" style={{
+        <section className="med-card" style={{
           padding: '1.25rem 1.75rem',
           display: 'flex',
           alignItems: 'center',
@@ -295,15 +357,15 @@ export default function App() {
             <button
               className="btn btn-primary"
               onClick={pendingTrade ? () => document.getElementById('verification-panel')?.scrollIntoView({ behavior: 'smooth' }) : handleStartNegotiation}
-              disabled={isNegotiating}
-              id="btn-start-negotiation"
+              disabled={isNegotiating || processingTrade}
+              id="start-negotiation-btn"
               style={{ padding: '0.8rem 1.6rem', fontSize: '0.95rem' }}
               title={pendingTrade ? "Review pending trade proposal below" : "Run autonomous multi-agent AI negotiation"}
             >
               <Sparkles size={18} className={isNegotiating ? "spin" : ""} />
               <span>
                 {isNegotiating 
-                  ? 'AI Agents Negotiating...' 
+                  ? 'Evaluating Peer Inventories...' 
                   : pendingTrade 
                     ? '⚠️ Trade Pending Approval (Review Below)' 
                     : '🚀 Start AI Negotiation'}
@@ -311,22 +373,22 @@ export default function App() {
             </button>
 
             {pendingTrade && (
-              <span className="badge badge-warning" style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}>
-                ⚠️ 1% Human Verification Required
+              <span className="badge badge-critical" style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', animation: 'pulse 2s infinite' }}>
+                <AlertTriangle size={14} /> Action Required: 1% Human Verification
               </span>
             )}
           </div>
 
-          {/* Right: Quick Telemetry Chips & Reasoning Toggle */}
+          {/* Right: Telemetry & Log Toggles */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
             {/* Shortage Counter */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: totalCritical > 0 ? '#f87171' : '#34d399', fontWeight: '600' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: totalCritical > 0 ? '#f87171' : '#34d399', fontWeight: '700' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: totalCritical > 0 ? '#ef4444' : '#10b981' }} />
                 <span>{totalCritical} Critical Deficits</span>
               </div>
               <span style={{ color: 'var(--text-muted)' }}>•</span>
-              <div style={{ color: '#fbbf24', fontWeight: '500' }}>
+              <div style={{ color: '#fbbf24', fontWeight: '600' }}>
                 {totalWarning} Warnings
               </div>
             </div>
@@ -344,17 +406,134 @@ export default function App() {
           </div>
         </section>
 
-        {/* ROW 1: Hospital Cards (3 Columns) */}
+        {/* SECTION 1: REGIONAL HOSPITAL INVENTORY NETWORK (Dakshina Kannada Corridor) */}
         <section>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-              Network Hospital Inventory Nodes
-            </h2>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Karnataka Healthcare Corridor • Mysuru District
-            </span>
+          {/* District Header & Quick Actions */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.85rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <h2 style={{ fontSize: '1.28rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                  Network Hospital Inventory Nodes
+                </h2>
+                <span className="badge badge-surplus" style={{ fontSize: '0.72rem' }}>
+                  {hospitals.length} Active Nodes
+                </span>
+              </div>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                Karnataka Healthcare Corridor • Dakshina Kannada District ({directory.length || 28} Facilities across 7 Taluks)
+              </span>
+            </div>
+
+            {/* Action Buttons: Directory Modal & Node Count */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              {/* Node count toggle */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.2rem',
+                border: '1px solid var(--border-subtle)'
+              }}>
+                {[3, 4, 6].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => {
+                      setNodeCount(n);
+                      handleNewScenario(selectedTaluk, n);
+                    }}
+                    style={{
+                      padding: '0.25rem 0.65rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: nodeCount === n ? 'var(--teal-600)' : 'transparent',
+                      color: nodeCount === n ? '#ffffff' : 'var(--text-secondary)'
+                    }}
+                  >
+                    {n} Nodes
+                  </button>
+                ))}
+              </div>
+
+              {/* View Full Directory Button */}
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDirectoryModal(true)}
+                style={{ padding: '0.5rem 0.95rem', fontSize: '0.82rem' }}
+                id="view-dk-directory-btn"
+              >
+                <Building2 size={15} color="#06b6d4" />
+                <span>🏥 District Directory ({directory.length || 28})</span>
+              </button>
+
+              {/* Regenerate Scenario */}
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleNewScenario(selectedTaluk, nodeCount)}
+                disabled={loading}
+                style={{ padding: '0.5rem 0.95rem', fontSize: '0.82rem' }}
+                title="Generate new crisis scenario in current corridor"
+              >
+                <RefreshCw size={14} className={loading ? "spin" : ""} />
+                <span>New Scenario</span>
+              </button>
+            </div>
           </div>
 
+          {/* Taluk Corridor Switcher Tabs */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            marginBottom: '1.25rem',
+            overflowX: 'auto',
+            paddingBottom: '0.35rem'
+          }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', marginRight: '0.3rem', whiteSpace: 'nowrap' }}>
+              Corridor:
+            </span>
+            {(taluks.length > 0 ? taluks : [
+              { name: 'All', label: 'All Dakshina Kannada', count: 28 },
+              { name: 'Mangalore', label: 'Mangalore', count: 14 },
+              { name: 'Bantwal', label: 'Bantwal', count: 3 },
+              { name: 'Puttur', label: 'Puttur', count: 3 },
+              { name: 'Belthangady', label: 'Belthangady', count: 3 },
+              { name: 'Sullia', label: 'Sullia', count: 2 },
+              { name: 'Moodbidri', label: 'Moodbidri', count: 2 },
+              { name: 'Kadaba', label: 'Kadaba', count: 1 },
+            ]).map(t => {
+              const isActive = selectedTaluk === t.name;
+              return (
+                <button
+                  key={t.name}
+                  onClick={() => {
+                    setSelectedTaluk(t.name);
+                    handleNewScenario(t.name, nodeCount);
+                  }}
+                  disabled={loading}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    border: isActive ? '1px solid var(--teal-600, #06b6d4)' : '1px solid var(--border-subtle)',
+                    background: isActive ? 'var(--badge-surplus-bg)' : 'var(--bg-surface)',
+                    color: isActive ? 'var(--badge-surplus-text)' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {t.name} ({t.count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Hospital Cards Grid */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
@@ -371,7 +550,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* ROW 2: Human-in-the-Loop Verification Panel (Only if Pending Trade exists) */}
+        {/* SECTION 2: HUMAN-IN-THE-LOOP VERIFICATION */}
         {pendingTrade && (
           <section id="verification-panel">
             <PendingTradePanel 
@@ -383,7 +562,7 @@ export default function App() {
           </section>
         )}
 
-        {/* ROW 3: Live Multi-Agent Negotiation Feed */}
+        {/* SECTION 3: LIVE MULTI-AGENT NEGOTIATION FEED */}
         <section>
           <NegotiationFeed 
             events={events}
@@ -391,7 +570,7 @@ export default function App() {
           />
         </section>
 
-        {/* ROW 4: AI Reasoning Telemetry (Toggled) */}
+        {/* SECTION 4: AI REASONING TELEMETRY (Toggled) */}
         {showReasoning && (
           <section id="reasoning-telemetry">
             <ReasoningDrawer 
@@ -401,7 +580,7 @@ export default function App() {
           </section>
         )}
 
-        {/* ROW 5: Immutable Trade History Audit Log & Requisition Requests */}
+        {/* SECTION 5: IMMUTABLE TRADE HISTORY AUDIT LOG & REQUISITION REQUESTS */}
         <section>
           <TradeHistoryTable 
             historyData={tradeHistory}
@@ -415,6 +594,15 @@ export default function App() {
         </section>
 
       </main>
+
+      {/* Dakshina Kannada Hospital Directory Modal */}
+      <DakshinaKannadaModal
+        isOpen={showDirectoryModal}
+        onClose={() => setShowDirectoryModal(false)}
+        directory={directory}
+        onSelectHospital={handleSelectHospitalFromDirectory}
+        currentActiveNames={hospitals.map(h => h.name)}
+      />
 
       {/* Interactive Find Medicine Nearby Modal */}
       <FindMedicineModal 
@@ -487,6 +675,9 @@ export default function App() {
         onSaveKey={handleSaveKey}
         currentStatus={status}
       />
+
+      {/* Assistant Chatbot */}
+      <SupplyChainChatbot />
     </div>
   );
 }
