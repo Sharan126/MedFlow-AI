@@ -8,6 +8,11 @@ import ReasoningDrawer from './components/ReasoningDrawer';
 import ApiKeyModal from './components/ApiKeyModal';
 import FindMedicineButton from './components/FindMedicineButton';
 import FindMedicineModal from './components/FindMedicineModal';
+import DemandForecastModal from './components/DemandForecastModal';
+import RiskEngineModal from './components/RiskEngineModal';
+import ExpiryIntelligenceModal from './components/ExpiryIntelligenceModal';
+import RedistributionModal from './components/RedistributionModal';
+import PriorityEngineModal from './components/PriorityEngineModal';
 import { Play, Sparkles, Brain, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle } from 'lucide-react';
 
 export default function App() {
@@ -26,6 +31,12 @@ export default function App() {
   const [showReasoning, setShowReasoning] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [showFindMedicineModal, setShowFindMedicineModal] = useState(false);
+  const [showForecastModal, setShowForecastModal] = useState(false);
+  const [showRiskModal, setShowRiskModal] = useState(false);
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const [showRedistributionModal, setShowRedistributionModal] = useState(false);
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [forecastTarget, setForecastTarget] = useState({ hospital: "City General Hospital", medicine: "Paracetamol" });
   const [errorBanner, setErrorBanner] = useState(null);
 
   // Fetch initial system state and medicine requests
@@ -210,6 +221,11 @@ export default function App() {
         onNewScenario={handleNewScenario}
         onOpenKeyModal={() => setShowKeyModal(true)}
         onOpenFindMedicine={() => setShowFindMedicineModal(true)}
+        onOpenForecast={() => setShowForecastModal(true)}
+        onOpenRisk={() => setShowRiskModal(true)}
+        onOpenExpiry={() => setShowExpiryModal(true)}
+        onOpenRedistribution={() => setShowRedistributionModal(true)}
+        onOpenPriority={() => setShowPriorityModal(true)}
         loading={loading}
       />
 
@@ -407,6 +423,60 @@ export default function App() {
         onRequestSuccess={() => {
           fetchMedicineRequests();
           fetchAllData();
+        }}
+      />
+
+      {/* Engine 1: Demand Forecast Modal */}
+      <DemandForecastModal 
+        isOpen={showForecastModal}
+        onClose={() => setShowForecastModal(false)}
+        initialHospital={forecastTarget.hospital}
+        initialMedicine={forecastTarget.medicine}
+        onTriggerRequisition={(req) => {
+          setShowFindMedicineModal(true);
+        }}
+      />
+
+      {/* Engine 2: Risk Engine Modal */}
+      <RiskEngineModal 
+        isOpen={showRiskModal}
+        onClose={() => setShowRiskModal(false)}
+        initialHospital={forecastTarget.hospital}
+        initialMedicine={forecastTarget.medicine}
+        onTriggerRequisition={(req) => {
+          setShowFindMedicineModal(true);
+        }}
+      />
+
+      {/* Engine 3: Expiry Intelligence Modal */}
+      <ExpiryIntelligenceModal 
+        isOpen={showExpiryModal}
+        onClose={() => setShowExpiryModal(false)}
+        initialHospital={forecastTarget.hospital}
+        initialMedicine={forecastTarget.medicine}
+        onTriggerRequisition={(req) => {
+          setShowFindMedicineModal(true);
+        }}
+      />
+
+      {/* Engine 4: Redistribution Optimizer Modal */}
+      <RedistributionModal 
+        isOpen={showRedistributionModal}
+        onClose={() => setShowRedistributionModal(false)}
+        initialRecipient={forecastTarget.hospital}
+        initialMedicine={forecastTarget.medicine}
+        onTransferExecuted={async () => {
+          await fetchAllData();
+        }}
+      />
+
+      {/* Engine 5: Priority Engine Modal */}
+      <PriorityEngineModal 
+        isOpen={showPriorityModal}
+        onClose={() => setShowPriorityModal(false)}
+        initialMedicine={forecastTarget.medicine}
+        onTriggerRequisition={(req) => {
+          setShowFindMedicineModal(true);
         }}
       />
 
