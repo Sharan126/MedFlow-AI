@@ -25,7 +25,7 @@ def request_medicine(payload: dict):
     """
     Handle manual medicine requisition from one hospital to another.
     """
-    from_hospital = payload.get("from_hospital", "City General Hospital")
+    from_hospital = payload.get("from_hospital", "Wenlock District Hospital")
     to_hospital = payload.get("to_hospital")
     medicine = payload.get("medicine")
     quantity = payload.get("quantity")

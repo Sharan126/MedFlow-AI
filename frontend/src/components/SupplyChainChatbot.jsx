@@ -35,11 +35,20 @@ export default function SupplyChainChatbot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: trimmedQuestion }),
-      });
+      let response;
+      try {
+        response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: trimmedQuestion }),
+        });
+      } catch (err) {
+        response = await fetch('http://localhost:8000/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: trimmedQuestion }),
+        });
+      }
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.detail || 'The assistant could not process your question.');

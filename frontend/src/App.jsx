@@ -198,13 +198,16 @@ export default function App() {
 
   // Handler: Human-in-the-Loop Trade Rejection
   const handleRejectTrade = async (reason) => {
+    const reasonText = (typeof reason === 'string' && reason.trim())
+      ? reason.trim()
+      : 'Declined by medical administrator';
     setProcessingTrade(true);
     setErrorBanner(null);
     try {
       const res = await fetch('/api/trade/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason: reasonText })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to reject trade');
@@ -502,9 +505,9 @@ export default function App() {
                     fontWeight: '700',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    border: isActive ? '1px solid #06b6d4' : '1px solid var(--border-subtle)',
-                    background: isActive ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                    color: isActive ? '#67e8f9' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid var(--teal-600, #06b6d4)' : '1px solid var(--border-subtle)',
+                    background: isActive ? 'var(--badge-surplus-bg)' : 'var(--bg-surface)',
+                    color: isActive ? 'var(--badge-surplus-text)' : 'var(--text-secondary)',
                     transition: 'all 0.15s ease'
                   }}
                 >
